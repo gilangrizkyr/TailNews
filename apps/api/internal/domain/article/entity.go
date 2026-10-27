@@ -102,6 +102,8 @@ type Repository interface {
 
 	// Views and Scheduled Jobs
 	IncrementViews(ctx context.Context, id uint64, count int64) error
+	RecordDailyViews(ctx context.Context, articleID uint64, viewDate time.Time, count int64) error
+	GetTrending(ctx context.Context, since time.Time, limit int32) ([]*ArticleSummary, error)
 	GetScheduledToPublish(ctx context.Context, now time.Time) ([]*ArticleSummary, error)
 	PublishScheduled(ctx context.Context, id uint64) error
 

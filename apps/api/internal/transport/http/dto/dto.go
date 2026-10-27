@@ -200,3 +200,44 @@ type DashboardStatsResponse struct {
 	TotalAuthors      int64 `json:"total_authors"`
 	TotalMedia        int64 `json:"total_media"`
 }
+
+// ==========================================
+// Public Reader DTOs
+// ==========================================
+type CursorArticlesResponse struct {
+	Articles   []ArticleResponse `json:"articles"`
+	NextCursor string            `json:"next_cursor,omitempty"`
+	HasMore    bool              `json:"has_more"`
+}
+
+type HomepageResponse struct {
+	Headlines  []ArticleResponse  `json:"headlines"`
+	Breaking   []ArticleResponse  `json:"breaking"`
+	Latest     []ArticleResponse  `json:"latest"`
+	NextCursor string             `json:"next_cursor,omitempty"`
+	Trending   []ArticleResponse  `json:"trending"`
+	Categories []CategoryResponse `json:"categories"`
+}
+
+type AuthorProfileResponse struct {
+	Author     AuthorResponse    `json:"author"`
+	Articles   []ArticleResponse `json:"articles"`
+	NextCursor string            `json:"next_cursor,omitempty"`
+	HasMore    bool              `json:"has_more"`
+}
+
+type PageResponse struct {
+	ID          uint64    `json:"id"`
+	Title       string    `json:"title"`
+	Slug        string    `json:"slug"`
+	Content     string    `json:"content"`
+	IsPublished bool      `json:"is_published"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type RecordViewResponse struct {
+	Recorded  bool   `json:"recorded"`
+	ArticleID uint64 `json:"article_id"`
+}
+

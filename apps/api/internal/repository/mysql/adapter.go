@@ -944,6 +944,51 @@ func (r *articleRepo) IncrementViews(ctx context.Context, id uint64, count int64
 	})
 }
 
+func (r *articleRepo) RecordDailyViews(ctx context.Context, articleID uint64, viewDate time.Time, count int64) error {
+	return r.q.UpsertDailyView(ctx, UpsertDailyViewParams{
+		ArticleID: articleID,
+		ViewDate:  viewDate,
+		Views:     uint32(count),
+	})
+}
+
+func (r *articleRepo) GetTrending(ctx context.Context, since time.Time, limit int32) ([]*article.ArticleSummary, error) {
+	rows, err := r.q.GetTopArticlesByViewsPeriod(ctx, GetTopArticlesByViewsPeriodParams{
+		ViewDate: since,
+		Limit:    limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*article.ArticleSummary, len(rows))
+	for i, row := range rows {
+		var coverID *uint64
+		if row.CoverMediaID.Valid {
+			cid := uint64(row.CoverMediaID.Int64)
+			coverID = &cid
+		}
+		var pubAt *time.Time
+		if row.PublishedAt.Valid {
+			pubAt = &row.PublishedAt.Time
+		}
+		res[i] = &article.ArticleSummary{
+			ID:           row.ID,
+			Title:        row.Title,
+			Slug:         row.Slug,
+			Excerpt:      row.Excerpt,
+			CoverMediaID: coverID,
+			CategoryID:   row.CategoryID,
+			AuthorID:     row.AuthorID,
+			IsHeadline:   row.IsHeadline,
+			IsBreaking:   row.IsBreaking,
+			ViewCount:    row.ViewCount,
+			PublishedAt:  pubAt,
+		}
+	}
+	return res, nil
+}
+
+
 func (r *articleRepo) GetScheduledToPublish(ctx context.Context, now time.Time) ([]*article.ArticleSummary, error) {
 	rows, err := r.q.GetScheduledArticlesToPublish(ctx, sql.NullTime{Time: now, Valid: true})
 	if err != nil {

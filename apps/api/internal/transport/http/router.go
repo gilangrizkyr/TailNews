@@ -20,11 +20,13 @@ import (
 
 // RouterConfig defines the dependencies required to construct the HTTP router.
 type RouterConfig struct {
-	Config  *config.Config
-	Logger  *slog.Logger
-	DB      *sql.DB
-	Redis   *redis.Client
-	Storage platform.StoragePlatform
+	Config      *config.Config
+	Logger      *slog.Logger
+	DB          *sql.DB
+	Redis       *redis.Client
+	Storage     platform.StoragePlatform
+	Cache       platform.CachePlatform
+	ViewCounter platform.ViewCounter
 }
 
 // NewRouter builds and returns the fully wired Chi HTTP handler.
@@ -60,6 +62,16 @@ func NewRouter(rc RouterConfig) http.Handler {
 	}
 	repo := mysql.NewRepository(rc.DB)
 
+	// Initialize Platform Cache & View Counter
+	cache := rc.Cache
+	if cache == nil {
+		cache = platform.NewRedisCache(rc.Redis, rc.Logger)
+	}
+	viewCounter := rc.ViewCounter
+	if viewCounter == nil {
+		viewCounter = platform.NewRedisViewCounter(rc.Redis, repo.Article, rc.Logger)
+	}
+
 	// Initialize Usecases
 	authUsecase := usecase.NewAuthUsecase(repo.User, rc.Config)
 	articleAdminUsecase := usecase.NewArticleAdminUsecase(
@@ -69,12 +81,24 @@ func NewRouter(rc RouterConfig) http.Handler {
 		repo.Media,
 		repo.Redirect,
 		repo.Audit,
+		cache,
 		rc.Config,
 	)
 	taxonomyAdminUsecase := usecase.NewTaxonomyAdminUsecase(repo.Category, repo.Tag, repo.Author)
 	mediaAdminUsecase := usecase.NewMediaAdminUsecase(repo.Media, storage, rc.Config)
 	redirectAdminUsecase := usecase.NewRedirectAdminUsecase(repo.Redirect)
 	dashboardAdminUsecase := usecase.NewDashboardAdminUsecase(rc.DB)
+	publicUsecase := usecase.NewPublicUsecase(
+		repo.Article,
+		repo.Category,
+		repo.Tag,
+		repo.Author,
+		repo.Page,
+		repo.Media,
+		cache,
+		viewCounter,
+		rc.Config,
+	)
 
 	// Initialize Handlers
 	authHandler := handler.NewAuthHandler(authUsecase, validate)
@@ -83,6 +107,7 @@ func NewRouter(rc RouterConfig) http.Handler {
 	mediaAdminHandler := handler.NewAdminMediaHandler(mediaAdminUsecase)
 	redirectAdminHandler := handler.NewAdminRedirectHandler(redirectAdminUsecase, validate)
 	dashboardAdminHandler := handler.NewAdminDashboardHandler(dashboardAdminUsecase)
+	publicHandler := handler.NewPublicHandler(publicUsecase)
 
 	// API Namespace
 	r.Route("/api/v1", func(api chi.Router) {
@@ -90,6 +115,19 @@ func NewRouter(rc RouterConfig) http.Handler {
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = w.Write([]byte(`{"success":true,"data":{"message":"pong"}}`))
 		})
+
+		// Public Reader Endpoints
+		api.Get("/homepage", publicHandler.GetHomepage)
+		api.Get("/articles", publicHandler.ListArticles)
+		api.Get("/articles/{slug}", publicHandler.GetArticleBySlug)
+		api.Post("/articles/{id}/view", publicHandler.RecordView)
+		api.Get("/categories", publicHandler.ListCategories)
+		api.Get("/categories/{slug}/articles", publicHandler.ListArticlesByCategory)
+		api.Get("/tags/{slug}/articles", publicHandler.ListArticlesByTag)
+		api.Get("/authors/{slug}", publicHandler.GetAuthor)
+		api.Get("/search", publicHandler.Search)
+		api.Get("/trending", publicHandler.GetTrending)
+		api.Get("/pages/{slug}", publicHandler.GetPage)
 
 		// Public Auth Endpoints
 		api.Route("/auth", func(auth chi.Router) {

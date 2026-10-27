@@ -13,6 +13,7 @@ import (
 
 	"news-portal/apps/api/internal/config"
 	"news-portal/apps/api/internal/platform"
+	"news-portal/apps/api/internal/repository/mysql"
 	transporthttp "news-portal/apps/api/internal/transport/http"
 )
 
@@ -70,12 +71,21 @@ func main() {
 	}()
 	logger.Info("connected to redis cluster successfully")
 
+	// Initialize Repositories, Caches & View Counter Worker
+	repo := mysql.NewRepository(db)
+	cache := platform.NewRedisCache(rdb, logger)
+	viewCounter := platform.NewRedisViewCounter(rdb, repo.Article, logger)
+	viewCounter.StartWorker(ctx, 10*time.Second)
+	logger.Info("started background view counter batch worker")
+
 	// Assemble HTTP Router
 	router := transporthttp.NewRouter(transporthttp.RouterConfig{
-		Config: cfg,
-		Logger: logger,
-		DB:     db,
-		Redis:  rdb,
+		Config:      cfg,
+		Logger:      logger,
+		DB:          db,
+		Redis:       rdb,
+		Cache:       cache,
+		ViewCounter: viewCounter,
 	})
 
 	server := &http.Server{

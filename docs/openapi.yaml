@@ -41,6 +41,193 @@ paths:
         '200':
           description: Pong response.
 
+  /api/v1/homepage:
+    get:
+      summary: Public Homepage Aggregation Feed
+      description: Returns aggregated payload with headlines, breaking news, latest articles with cursor, trending, and categories.
+      responses:
+        '200':
+          description: Homepage feed data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HomepageResponseEnvelope'
+
+  /api/v1/articles:
+    get:
+      summary: Keyset Cursor Paginated Articles Feed
+      parameters:
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 12
+      responses:
+        '200':
+          description: Paginated articles.
+
+  /api/v1/articles/{slug}:
+    get:
+      summary: Article Detail by Slug
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: token
+          in: query
+          description: Optional preview token for unpublished drafts.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Article full details.
+        '404':
+          description: Article not found.
+
+  /api/v1/articles/{id}/view:
+    post:
+      summary: Record Article View
+      description: Logs article view with IP+UA hourly deduplication in Redis.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: View recorded or deduplicated status.
+
+  /api/v1/categories:
+    get:
+      summary: Public Categories Navigation
+      responses:
+        '200':
+          description: List of categories.
+
+  /api/v1/categories/{slug}/articles:
+    get:
+      summary: Articles by Category Slug
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 12
+      responses:
+        '200':
+          description: Paginated category articles.
+
+  /api/v1/tags/{slug}/articles:
+    get:
+      summary: Articles by Tag Slug
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 12
+      responses:
+        '200':
+          description: Paginated tag articles.
+
+  /api/v1/authors/{slug}:
+    get:
+      summary: Author Profile and Articles Feed
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 12
+      responses:
+        '200':
+          description: Author profile with articles.
+
+  /api/v1/search:
+    get:
+      summary: Full-text Search
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: Search results.
+
+  /api/v1/trending:
+    get:
+      summary: Trending Articles Feed
+      parameters:
+        - name: window
+          in: query
+          schema:
+            type: string
+            enum: [today, week]
+            default: today
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Trending articles.
+
+  /api/v1/pages/{slug}:
+    get:
+      summary: Static Editorial Page Content
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Static page content.
+
+
   /api/v1/auth/login:
     post:
       summary: User Login

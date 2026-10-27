@@ -17,6 +17,7 @@ import (
 	domainerrors "news-portal/apps/api/internal/pkg/errors"
 	"news-portal/apps/api/internal/pkg/sanitize"
 	"news-portal/apps/api/internal/pkg/slug"
+	"news-portal/apps/api/internal/platform"
 	"news-portal/apps/api/internal/transport/http/dto"
 )
 
@@ -27,6 +28,7 @@ type ArticleAdminUsecase struct {
 	mediaRepo    media.Repository
 	redirectRepo redirect.Repository
 	auditRepo    audit.Repository
+	cache        platform.CachePlatform
 	cfg          *config.Config
 }
 
@@ -37,6 +39,7 @@ func NewArticleAdminUsecase(
 	mediaRepo media.Repository,
 	redirectRepo redirect.Repository,
 	auditRepo audit.Repository,
+	cache platform.CachePlatform,
 	cfg *config.Config,
 ) *ArticleAdminUsecase {
 	return &ArticleAdminUsecase{
@@ -46,8 +49,23 @@ func NewArticleAdminUsecase(
 		mediaRepo:    mediaRepo,
 		redirectRepo: redirectRepo,
 		auditRepo:    auditRepo,
+		cache:        cache,
 		cfg:          cfg,
 	}
+}
+
+func (u *ArticleAdminUsecase) invalidateCache(ctx context.Context, artSlug string, categoryID uint64) {
+	if u.cache == nil {
+		return
+	}
+	_ = u.cache.Delete(ctx,
+		"news:v1:article:slug:"+artSlug,
+		"news:v1:feed:home",
+		"news:v1:trending:today:10",
+		"news:v1:trending:week:10",
+	)
+	_ = u.cache.DeletePattern(ctx, "news:v1:feed:articles:*")
+	_ = u.cache.DeletePattern(ctx, fmt.Sprintf("news:v1:feed:category:%d:*", categoryID))
 }
 
 func (u *ArticleAdminUsecase) Create(ctx context.Context, req *dto.ArticleUpsertRequest, userID uint64, ip string, ua string) (*dto.ArticleResponse, error) {
@@ -109,6 +127,8 @@ func (u *ArticleAdminUsecase) Create(ctx context.Context, req *dto.ArticleUpsert
 		IPAddress:   ip,
 		UserAgent:   ua,
 	})
+
+	u.invalidateCache(ctx, art.Slug, art.CategoryID)
 
 	return u.GetByID(ctx, id)
 }
@@ -177,6 +197,8 @@ func (u *ArticleAdminUsecase) Update(ctx context.Context, id uint64, req *dto.Ar
 		UserAgent:   ua,
 	})
 
+	u.invalidateCache(ctx, existing.Slug, existing.CategoryID)
+
 	return u.GetByID(ctx, id)
 }
 
@@ -200,6 +222,8 @@ func (u *ArticleAdminUsecase) SoftDelete(ctx context.Context, id uint64, userID 
 		IPAddress:   ip,
 		UserAgent:   ua,
 	})
+
+	u.invalidateCache(ctx, existing.Slug, existing.CategoryID)
 
 	return nil
 }
@@ -255,6 +279,8 @@ func (u *ArticleAdminUsecase) RestoreRevision(ctx context.Context, articleID uin
 		IPAddress:   ip,
 		UserAgent:   ua,
 	})
+
+	u.invalidateCache(ctx, art.Slug, art.CategoryID)
 
 	return u.GetByID(ctx, articleID)
 }
