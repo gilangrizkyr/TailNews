@@ -1,0 +1,76 @@
+---
+import type { Article } from '../lib/api';
+import { formatDate, estimateReadingTime } from '../lib/api';
+
+interface Props {
+  article: Article;
+  layout?: 'horizontal' | 'vertical';
+}
+
+const { article, layout = 'horizontal' } = Astro.props;
+const readingTime = estimateReadingTime(article.body || article.excerpt);
+const formattedDate = formatDate(article.published_at);
+---
+
+<article class={`group bg-white rounded-sm overflow-hidden border-b border-gray-100 pb-5 mb-5 ${layout === 'horizontal' ? 'flex flex-col sm:flex-row gap-4' : 'flex flex-col'}`}>
+  <!-- Thumbnail -->
+  <div class={`flex-shrink-0 overflow-hidden bg-gray-100 ${layout === 'horizontal' ? 'w-full sm:w-48 md:w-56 h-36' : 'w-full h-48'}`}>
+    <a href={`/${article.slug}`} class="block w-full h-full">
+      <img
+        src={article.cover_url || '/img/bg.jpg'}
+        alt={article.title}
+        width="400"
+        height="225"
+        class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+        loading="lazy"
+      />
+    </a>
+  </div>
+
+  <!-- Content -->
+  <div class="flex-1 flex flex-col justify-between pt-2 sm:pt-0">
+    <div>
+      <!-- Category Badge & Time -->
+      <div class="flex items-center space-x-2 text-xs mb-1.5">
+        {article.category_name && (
+          <a
+            href={`/category/${article.category_slug || ''}`}
+            class="font-bold text-red-600 hover:text-red-700 uppercase tracking-wider text-[11px]"
+          >
+            {article.category_name}
+          </a>
+        )}
+        <span class="text-gray-300">&bull;</span>
+        <span class="text-gray-400 text-[11px]">{formattedDate}</span>
+      </div>
+
+      <!-- Title -->
+      <h2 class="text-base sm:text-lg font-bold text-gray-900 group-hover:text-red-600 transition-colors leading-snug line-clamp-2 mb-2">
+        <a href={`/${article.slug}`}>
+          {article.title}
+        </a>
+      </h2>
+
+      <!-- Excerpt -->
+      <p class="text-xs sm:text-sm text-gray-500 line-clamp-2 leading-relaxed">
+        {article.excerpt}
+      </p>
+    </div>
+
+    <!-- Meta info -->
+    <div class="flex items-center text-[11px] text-gray-400 mt-3 pt-2 border-t border-gray-50">
+      {article.author_name && (
+        <span class="mr-3 text-gray-600 font-medium">
+          Oleh <a href={`/author/${article.author_slug || ''}`} class="hover:text-black">{article.author_name}</a>
+        </span>
+      )}
+      <span>{readingTime} menit baca</span>
+      {article.view_count > 0 && (
+        <>
+          <span class="mx-2">&bull;</span>
+          <span>{article.view_count.toLocaleString('id-ID')} tayangan</span>
+        </>
+      )}
+    </div>
+  </div>
+</article>

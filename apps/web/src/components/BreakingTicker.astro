@@ -1,0 +1,25 @@
+---
+import type { Article } from '../lib/api';
+
+interface Props {
+  breaking?: Article[];
+}
+
+const { breaking = [] } = Astro.props;
+const current = breaking.length > 0 ? breaking[0] : null;
+---
+
+{current && (
+  <div class="bg-black text-white text-xs py-2 border-b border-gray-800">
+    <div class="xl:container mx-auto px-3 sm:px-4 xl:px-2 flex items-center">
+      <span class="inline-flex items-center px-2.5 py-1 bg-red-600 font-bold uppercase tracking-wider text-[11px] rounded-sm mr-3 flex-shrink-0">
+        Breaking News
+      </span>
+      <div class="overflow-hidden whitespace-nowrap text-ellipsis flex-1">
+        <a href={`/${current.slug}`} class="text-gray-300 hover:text-white font-medium transition-colors">
+          {current.title}
+        </a>
+      </div>
+    </div>
+  </div>
+)}

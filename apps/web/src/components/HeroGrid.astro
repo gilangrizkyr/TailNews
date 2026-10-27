@@ -1,0 +1,93 @@
+---
+import type { Article } from '../lib/api';
+
+interface Props {
+  headlines?: Article[];
+}
+
+const { headlines = [] } = Astro.props;
+const lead = headlines.length > 0 ? headlines[0] : null;
+const subHeadlines = headlines.slice(1, 5);
+---
+
+{lead && (
+  <section class="bg-white py-6 border-b border-gray-200">
+    <div class="xl:container mx-auto px-3 sm:px-4 xl:px-2">
+      <div class="flex flex-row flex-wrap">
+        <!-- Start left cover (Lead Article) -->
+        <div class="flex-shrink max-w-full w-full lg:w-1/2 pb-1 lg:pb-0 lg:pr-1">
+          <div class="relative hover-img max-h-98 overflow-hidden bg-gray-900 group rounded-sm">
+            <a href={`/${lead.slug}`} class="block w-full h-full">
+              <img
+                class="max-w-full w-full mx-auto h-[388px] object-cover transition-transform duration-500 group-hover:scale-105"
+                src={lead.cover_url || '/img/bg.jpg'}
+                alt={lead.title}
+                width="800"
+                height="450"
+                fetchpriority="high"
+                loading="eager"
+              />
+            </a>
+            <div class="absolute px-5 pt-12 pb-5 bottom-0 w-full bg-gradient-cover pointer-events-none">
+              <a href={`/${lead.slug}`} class="pointer-events-auto block">
+                <h2 class="text-2xl sm:text-3xl font-extrabold capitalize text-white mb-2 leading-tight group-hover:text-red-400 transition-colors">
+                  {lead.title}
+                </h2>
+              </a>
+              <p class="text-gray-200 text-sm hidden sm:line-clamp-2 mb-2 leading-relaxed">
+                {lead.excerpt}
+              </p>
+              <div class="flex items-center text-xs text-gray-300 space-x-2 pt-1">
+                {lead.category_name && (
+                  <span class="inline-flex items-center font-bold uppercase tracking-wider text-white">
+                    <span class="inline-block h-3 border-l-2 border-red-600 mr-2"></span>
+                    {lead.category_name}
+                  </span>
+                )}
+                <span>&bull;</span>
+                <span>{lead.published_at ? new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'short' }).format(new Date(lead.published_at)) : ''}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Start box news (4 Sub-Headlines) -->
+        <div class="flex-shrink max-w-full w-full lg:w-1/2">
+          <div class="box-one flex flex-row flex-wrap">
+            {subHeadlines.map((art) => (
+              <article class="flex-shrink max-w-full w-full sm:w-1/2 p-0.5">
+                <div class="relative hover-img max-h-48 overflow-hidden bg-gray-900 group rounded-sm">
+                  <a href={`/${art.slug}`} class="block w-full h-full">
+                    <img
+                      class="max-w-full w-full mx-auto h-[192px] object-cover transition-transform duration-500 group-hover:scale-105"
+                      src={art.cover_url || '/img/bg.jpg'}
+                      alt={art.title}
+                      width="400"
+                      height="225"
+                      loading="lazy"
+                    />
+                  </a>
+                  <div class="absolute px-4 pt-8 pb-3 bottom-0 w-full bg-gradient-cover pointer-events-none">
+                    <a href={`/${art.slug}`} class="pointer-events-auto block">
+                      <h3 class="text-sm sm:text-base font-bold capitalize leading-snug text-white line-clamp-2 group-hover:text-red-400 transition-colors">
+                        {art.title}
+                      </h3>
+                    </a>
+                    <div class="pt-1 flex items-center text-[11px] text-gray-300">
+                      {art.category_name && (
+                        <span class="inline-flex items-center font-semibold uppercase tracking-wider text-white">
+                          <span class="inline-block h-2.5 border-l-2 border-red-600 mr-1.5"></span>
+                          {art.category_name}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+)}

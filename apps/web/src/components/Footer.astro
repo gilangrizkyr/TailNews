@@ -1,0 +1,106 @@
+---
+import type { Category } from '../lib/api';
+
+interface Props {
+  categories?: Category[];
+}
+
+const { categories = [] } = Astro.props;
+const year = new Date().getFullYear();
+---
+
+<!-- ========== { FOOTER }==========  -->
+<footer class="bg-black text-gray-400 mt-16 pt-12 border-t-4 border-red-600">
+  <div class="xl:container mx-auto px-3 sm:px-4 xl:px-2">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8 pb-12 border-b border-gray-800">
+      <!-- Col 1: About Portal -->
+      <div class="md:col-span-1 space-y-4">
+        <a href="/" class="text-2xl font-black tracking-wider uppercase text-white block">
+          TAIL<span class="text-red-600">NEWS</span>
+        </a>
+        <p class="text-xs text-gray-400 leading-relaxed">
+          Portal berita independen, terverifikasi, dan tercepat menyajikan liputan mendalam politik, ekonomi, teknologi, olahraga, dan gaya hidup di Indonesia dan dunia.
+        </p>
+        <div class="flex space-x-3 text-sm text-gray-400">
+          <span class="inline-block py-1 px-2.5 bg-gray-900 border border-gray-800 rounded text-[11px] font-semibold text-gray-300">
+            Terverifikasi Dewan Pers
+          </span>
+        </div>
+      </div>
+
+      <!-- Col 2: Kategori Populer -->
+      <div>
+        <h3 class="text-sm font-bold uppercase tracking-wider text-white border-b-2 border-red-600 pb-2 mb-4 inline-block">
+          Kategori Berita
+        </h3>
+        <ul class="space-y-2 text-xs">
+          {categories.slice(0, 6).map((c) => (
+            <li>
+              <a href={`/category/${c.slug}`} class="hover:text-red-500 transition-colors flex items-center justify-between">
+                <span>{c.name}</span>
+                <span class="text-gray-600">&rarr;</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <!-- Col 3: Informasi Redaksional -->
+      <div>
+        <h3 class="text-sm font-bold uppercase tracking-wider text-white border-b-2 border-red-600 pb-2 mb-4 inline-block">
+          Informasi & Kebijakan
+        </h3>
+        <ul class="space-y-2 text-xs">
+          <li>
+            <a href="/page/tentang-kami" class="hover:text-red-500 transition-colors">Tentang Kami</a>
+          </li>
+          <li>
+            <a href="/page/pedoman-media-siber" class="hover:text-red-500 transition-colors">Pedoman Media Siber</a>
+          </li>
+          <li>
+            <a href="/page/kebijakan-privasi" class="hover:text-red-500 transition-colors">Kebijakan Privasi</a>
+          </li>
+          <li>
+            <a href="/sitemap.xml" target="_blank" class="hover:text-red-500 transition-colors">Sitemap XML</a>
+          </li>
+          <li>
+            <a href="/rss.xml" target="_blank" class="hover:text-red-500 transition-colors">RSS 2.0 Feed</a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Col 4: Kontak Redaksi -->
+      <div>
+        <h3 class="text-sm font-bold uppercase tracking-wider text-white border-b-2 border-red-600 pb-2 mb-4 inline-block">
+          Redaksi & Hotline
+        </h3>
+        <p class="text-xs text-gray-400 mb-3">
+          Memiliki informasi atau tips investigasi terpercaya? Kirimkan kepada tim redaksi kami.
+        </p>
+        <div class="text-xs space-y-1 text-gray-300">
+          <p><span class="text-gray-500">Email:</span> redaksi@newsportal.id</p>
+          <p><span class="text-gray-500">Telepon:</span> +62 (21) 555-0199</p>
+          <p><span class="text-gray-500">Alamat:</span> Jakarta Pusat, Indonesia</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Copyright & Back to Top -->
+    <div class="py-6 flex flex-col sm:flex-row justify-between items-center text-xs text-gray-500 space-y-3 sm:space-y-0">
+      <p>&copy; {year} Tailnews Media Portal. Seluruh hak cipta dilindungi undang-undang.</p>
+      <div class="flex items-center space-x-4">
+        <span>Dibangun dengan Astro SSR & Go API</span>
+        <button
+          type="button"
+          class="back-top inline-flex items-center space-x-1.5 py-1.5 px-3 bg-gray-900 hover:bg-gray-800 text-gray-300 rounded text-xs transition-colors focus:outline-none"
+          aria-label="Kembali ke atas"
+        >
+          <span>Ke Atas</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</footer>

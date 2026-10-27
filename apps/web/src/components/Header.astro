@@ -1,0 +1,177 @@
+---
+import type { Category } from '../lib/api';
+
+interface Props {
+  categories?: Category[];
+  activeCategory?: string;
+}
+
+const { categories = [], activeCategory = '' } = Astro.props;
+const todayStr = new Intl.DateTimeFormat('id-ID', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+}).format(new Date());
+---
+
+<!-- ========== { HEADER }==========  -->
+<header class="fixed top-0 left-0 right-0 z-50">
+  <!-- Top Utility Bar -->
+  <div class="bg-gray-900 text-gray-400 text-xs py-1 border-b border-gray-800 hidden md:block">
+    <div class="xl:container mx-auto px-3 sm:px-4 xl:px-2 flex justify-between items-center">
+      <div class="flex items-center space-x-4">
+        <span>{todayStr}</span>
+        <span class="text-gray-600">|</span>
+        <span class="text-red-500 font-semibold uppercase tracking-wider">Berita Terkini & Terpercaya</span>
+      </div>
+      <div class="flex items-center space-x-4">
+        <a href="/search" class="hover:text-white transition-colors">Pencarian</a>
+        <a href="/page/tentang-kami" class="hover:text-white transition-colors">Tentang Kami</a>
+        <a href="/page/kebijakan-privasi" class="hover:text-white transition-colors">Kebijakan Privasi</a>
+        <a href="http://localhost:5173" target="_blank" rel="noopener noreferrer" class="text-gray-300 hover:text-white font-medium">Redaksi (Admin)</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Navbar -->
+  <nav class="bg-black">
+    <div class="xl:container mx-auto px-3 sm:px-4 xl:px-2">
+      <div class="flex justify-between items-center h-14 sm:h-16">
+        <!-- Logo -->
+        <a href="/" class="text-2xl font-black tracking-wider uppercase text-white flex items-center hover:opacity-90 transition-opacity">
+          TAIL<span class="text-red-600">NEWS</span>
+        </a>
+
+        <!-- Desktop Navigation Menu -->
+        <div class="flex flex-row items-center h-full">
+          <ul class="navbar hidden lg:flex lg:flex-row text-gray-400 text-sm items-center font-bold h-full">
+            <li class={`relative border-l border-gray-800 hover:bg-gray-900 h-full flex items-center ${!activeCategory ? 'active' : ''}`}>
+              <a class="block py-4 px-5 border-b-2 border-transparent hover:text-white transition-colors" href="/">Home</a>
+            </li>
+
+            {categories.slice(0, 6).map((cat) => (
+              <li class={`relative border-l border-gray-800 hover:bg-gray-900 h-full flex items-center ${activeCategory === cat.slug ? 'active' : ''}`}>
+                <a class="block py-4 px-5 border-b-2 border-transparent hover:text-white transition-colors" href={`/category/${cat.slug}`}>
+                  {cat.name}
+                </a>
+              </li>
+            ))}
+
+            <!-- Dropdown for more categories / pages -->
+            <li class="dropdown relative border-l border-gray-800 hover:bg-gray-900 h-full flex items-center">
+              <a class="block py-4 px-5 border-b-2 border-transparent hover:text-white transition-colors flex items-center" href="#">
+                Lainnya
+              </a>
+              <ul class="dropdown-menu font-normal absolute left-0 right-auto top-full z-50 border-b-0 text-left bg-white text-gray-700 border border-gray-100 shadow-xl" style="min-width: 14rem;">
+                {categories.slice(6).map((cat) => (
+                  <li class="relative hover:bg-gray-50">
+                    <a class="block py-2.5 px-6 border-b border-gray-100 hover:text-red-600" href={`/category/${cat.slug}`}>
+                      {cat.name}
+                    </a>
+                  </li>
+                ))}
+                <li class="relative hover:bg-gray-50">
+                  <a class="block py-2.5 px-6 border-b border-gray-100 hover:text-red-600" href="/page/tentang-kami">Tentang Kami</a>
+                </li>
+                <li class="relative hover:bg-gray-50">
+                  <a class="block py-2.5 px-6 border-b border-gray-100 hover:text-red-600" href="/page/pedoman-media-siber">Pedoman Media Siber</a>
+                </li>
+                <li class="relative hover:bg-gray-50">
+                  <a class="block py-2.5 px-6 hover:text-red-600" href="/page/kebijakan-privasi">Kebijakan Privasi</a>
+                </li>
+              </ul>
+            </li>
+          </ul>
+
+          <!-- Search form trigger & Mobile toggle -->
+          <div class="flex flex-row items-center text-gray-300 h-full">
+            <!-- Search Dropdown Trigger -->
+            <div class="search-dropdown relative border-r lg:border-l border-gray-800 hover:bg-gray-900 h-full flex items-center">
+              <button class="block py-4 px-5 border-b-2 border-transparent focus:outline-none" aria-label="Buka pencarian">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="open bi bi-search" viewBox="0 0 16 16">
+                  <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"></path>
+                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="close bi bi-x-lg hidden" viewBox="0 0 16 16">
+                  <path fill-rule="evenodd" d="M13.854 2.146a.5.5 0 0 1 0 .708l-11 11a.5.5 0 0 1-.708-.708l11-11a.5.5 0 0 1 .708 0Z"></path>
+                  <path fill-rule="evenodd" d="M2.146 2.146a.5.5 0 0 0 0 .708l11 11a.5.5 0 0 0 .708-.708l-11-11a.5.5 0 0 0-.708 0Z"></path>
+                </svg>
+              </button>
+
+              <!-- Search Popup Form -->
+              <div class="dropdown-menu absolute left-auto right-0 top-full z-50 text-left bg-white text-gray-700 border border-gray-200 shadow-2xl p-3" style="min-width: 18rem;">
+                <form action="/search" method="GET" class="flex items-stretch w-full">
+                  <input
+                    type="text"
+                    name="q"
+                    class="w-full py-2 px-3 text-sm text-gray-800 bg-gray-50 border border-gray-300 rounded-l focus:outline-none focus:ring-1 focus:ring-black"
+                    placeholder="Ketik kata kunci berita..."
+                    required
+                  />
+                  <button type="submit" class="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-r flex items-center justify-center transition-colors" aria-label="Cari">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                      <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"></path>
+                    </svg>
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Mobile Hamburger Button -->
+            <div class="relative hover:bg-gray-800 block lg:hidden h-full flex items-center">
+              <button type="button" class="menu-mobile block py-3 px-5 text-gray-300 hover:text-white focus:outline-none" aria-label="Menu navigasi mobile">
+                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="3" y1="12" x2="21" y2="12"></line>
+                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                  <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Mobile Drawer Overlay -->
+  <div class="side-area fixed inset-0 z-50 bg-black/60 hidden">
+    <div class="back-menu absolute inset-0 cursor-pointer"></div>
+    <div class="side-menu fixed top-0 bottom-0 right-0 w-72 bg-gray-900 text-white p-6 shadow-2xl flex flex-col justify-between overflow-y-auto">
+      <div>
+        <div class="flex justify-between items-center pb-4 border-b border-gray-800">
+          <span class="text-xl font-bold tracking-wider">TAIL<span class="text-red-500">NEWS</span></span>
+          <button type="button" class="back-menu text-gray-400 hover:text-white p-2" aria-label="Tutup menu">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Search Mobile -->
+        <form action="/search" method="GET" class="my-4">
+          <input
+            type="text"
+            name="q"
+            class="w-full py-2 px-3 text-sm text-gray-200 bg-gray-800 border border-gray-700 rounded focus:outline-none focus:border-red-500"
+            placeholder="Cari berita..."
+          />
+        </form>
+
+        <nav class="space-y-1">
+          <a href="/" class="block py-2.5 px-3 rounded hover:bg-gray-800 font-semibold text-gray-200">Home</a>
+          {categories.map((c) => (
+            <a href={`/category/${c.slug}`} class="block py-2.5 px-3 rounded hover:bg-gray-800 text-gray-300 font-medium">
+              {c.name}
+            </a>
+          ))}
+          <a href="/page/tentang-kami" class="block py-2.5 px-3 rounded hover:bg-gray-800 text-gray-300 font-medium">Tentang Kami</a>
+          <a href="/page/pedoman-media-siber" class="block py-2.5 px-3 rounded hover:bg-gray-800 text-gray-300 font-medium">Pedoman Siber</a>
+        </nav>
+      </div>
+
+      <div class="pt-6 border-t border-gray-800 text-xs text-gray-500">
+        <p>&copy; {new Date().getFullYear()} Tailnews Portal. Seluruh hak cipta dilindungi.</p>
+      </div>
+    </div>
+  </div>
+</header>

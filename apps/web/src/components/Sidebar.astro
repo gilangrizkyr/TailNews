@@ -1,0 +1,81 @@
+---
+import type { Article, Category } from '../lib/api';
+import { formatDate } from '../lib/api';
+
+interface Props {
+  trending?: Article[];
+  categories?: Category[];
+}
+
+const { trending = [], categories = [] } = Astro.props;
+---
+
+<aside class="space-y-8">
+  <!-- Widget: Trending / Terpopuler -->
+  <div class="bg-white p-5 rounded-sm border border-gray-100 shadow-sm">
+    <div class="border-b-2 border-red-600 pb-2 mb-5 flex items-center justify-between">
+      <h3 class="text-sm font-black uppercase tracking-wider text-gray-900">
+        Berita Terpopuler
+      </h3>
+      <span class="text-[11px] font-bold text-red-600 uppercase tracking-widest">Trending</span>
+    </div>
+
+    <ul class="post-number space-y-4">
+      {trending.slice(0, 5).map((art, idx) => (
+        <li class="flex items-start pb-4 border-b border-gray-50 last:border-b-0 last:pb-0">
+          <span class="text-3xl font-black text-gray-300 mr-3.5 leading-none select-none font-mono">
+            {String(idx + 1).padStart(2, '0')}
+          </span>
+          <div class="flex-1">
+            {art.category_name && (
+              <span class="text-[10px] font-bold text-red-600 uppercase tracking-wider block mb-1">
+                {art.category_name}
+              </span>
+            )}
+            <h4 class="text-xs sm:text-sm font-bold text-gray-800 hover:text-red-600 leading-snug line-clamp-2 transition-colors">
+              <a href={`/${art.slug}`}>
+                {art.title}
+              </a>
+            </h4>
+            <span class="text-[11px] text-gray-400 mt-1 block">
+              {formatDate(art.published_at)}
+            </span>
+          </div>
+        </li>
+      ))}
+    </ul>
+  </div>
+
+  <!-- Widget: Reserved Ad Slot (Zero CLS guarantee) -->
+  <div class="bg-gray-100 rounded-sm p-4 text-center border border-gray-200">
+    <span class="text-[10px] uppercase font-semibold text-gray-400 tracking-wider block mb-2">Iklan</span>
+    <div class="ad-slot-reserved h-64 flex flex-col items-center justify-center bg-gray-50 text-gray-400 text-xs rounded border border-dashed border-gray-300">
+      <svg class="w-8 h-8 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+      </svg>
+      <span>Slot Iklan Terbuka (300 x 250)</span>
+      <span class="text-[10px] text-gray-400 mt-1">Hubungi Redaksi</span>
+    </div>
+  </div>
+
+  <!-- Widget: Jelajah Kategori -->
+  {categories.length > 0 && (
+    <div class="bg-white p-5 rounded-sm border border-gray-100 shadow-sm">
+      <div class="border-b-2 border-red-600 pb-2 mb-4">
+        <h3 class="text-sm font-black uppercase tracking-wider text-gray-900">
+          Kanal Berita
+        </h3>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        {categories.map((c) => (
+          <a
+            href={`/category/${c.slug}`}
+            class="inline-block py-1.5 px-3 bg-gray-50 hover:bg-black hover:text-white text-gray-700 text-xs font-semibold rounded-sm border border-gray-200 transition-colors"
+          >
+            {c.name}
+          </a>
+        ))}
+      </div>
+    </div>
+  )}
+</aside>

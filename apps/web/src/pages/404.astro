@@ -1,0 +1,43 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getCategories } from '../lib/api';
+
+const categories = await getCategories();
+---
+
+<Layout
+  title="404 - Halaman Tidak Ditemukan - Tailnews"
+  description="Halaman yang Anda cari tidak dapat ditemukan atau telah dipindahkan."
+  categories={categories}
+>
+  <div class="bg-gray-50 py-16">
+    <div class="xl:container mx-auto px-3 sm:px-4 xl:px-2 text-center max-w-xl">
+      <div class="bg-white p-8 sm:p-12 rounded-sm border border-gray-100 shadow-sm">
+        <span class="text-7xl sm:text-9xl font-black text-gray-200 block mb-4 font-mono select-none">
+          404
+        </span>
+        <h1 class="text-2xl sm:text-3xl font-black text-gray-900 mb-3">
+          Halaman Tidak Ditemukan
+        </h1>
+        <p class="text-sm text-gray-500 mb-8 leading-relaxed">
+          Maaf, artikel atau halaman yang Anda cari mungkin telah dipindahkan, diubah URL-nya, atau tidak lagi tersedia.
+        </p>
+
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <a
+            href="/"
+            class="w-full sm:w-auto py-2.5 px-6 bg-black hover:bg-red-600 text-white text-xs font-bold uppercase tracking-wider rounded-sm transition-colors shadow-sm"
+          >
+            &larr; Kembali ke Beranda
+          </a>
+          <a
+            href="/search"
+            class="w-full sm:w-auto py-2.5 px-6 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold uppercase tracking-wider rounded-sm transition-colors"
+          >
+            Cari Berita Lain
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>

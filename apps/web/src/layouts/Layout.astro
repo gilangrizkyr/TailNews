@@ -1,0 +1,91 @@
+---
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import type { Category } from '../lib/api';
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  canonicalUrl?: string;
+  ogImage?: string;
+  ogType?: 'website' | 'article';
+  publishedTime?: string;
+  authorName?: string;
+  categories?: Category[];
+  activeCategory?: string;
+  preloadImage?: string;
+}
+
+const {
+  title = 'Tailnews - Portal Berita Modern & Terpercaya',
+  description = 'Portal berita terkini, aktual, dan terpercaya menyajikan informasi politik, ekonomi, teknologi, olahraga, dan gaya hidup terkini.',
+  canonicalUrl = Astro.url.href,
+  ogImage = '/img/bg.jpg',
+  ogType = 'website',
+  publishedTime,
+  authorName,
+  categories = [],
+  activeCategory = '',
+  preloadImage,
+} = Astro.props;
+
+const siteName = 'Tailnews';
+const absoluteOgImage = ogImage.startsWith('http') ? ogImage : new URL(ogImage, Astro.site || Astro.url.origin).href;
+---
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+  <!-- Title & Meta SEO -->
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <link rel="canonical" href={canonicalUrl} />
+
+  <!-- OpenGraph / Facebook -->
+  <meta property="og:type" content={ogType} />
+  <meta property="og:url" content={canonicalUrl} />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:image" content={absoluteOgImage} />
+  <meta property="og:site_name" content={siteName} />
+  {publishedTime && <meta property="article:published_time" content={publishedTime} />}
+  {authorName && <meta property="article:author" content={authorName} />}
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content={canonicalUrl} />
+  <meta name="twitter:title" content={title} />
+  <meta name="twitter:description" content={description} />
+  <meta name="twitter:image" content={absoluteOgImage} />
+
+  <!-- LCP Hero Image Preload -->
+  {preloadImage && (
+    <link rel="preload" as="image" href={preloadImage} fetchpriority="high" />
+  )}
+
+  <!-- Google Fonts Preconnect -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/jpeg" href="/img/favicon.jpg" />
+</head>
+<body class="bg-gray-50 text-gray-800 antialiased pt-16 md:pt-24 flex flex-col min-h-screen">
+  <Header categories={categories} activeCategory={activeCategory} />
+
+  <main class="flex-grow">
+    <slot />
+  </main>
+
+  <Footer categories={categories} />
+
+  <!-- Tailnews Client Scripts (Dropdowns, mobile drawer, back-to-top) -->
+  <script src="/js/theme.js" is:inline></script>
+</body>
+</html>
