@@ -1,21 +1,27 @@
 import { clearCookies } from '@/test-utils/cookies'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { UserResponse } from '@/types/api'
 
 async function importAuthStore() {
   const { useAuthStore } = await import('./auth-store')
   return useAuthStore
 }
 
-const sampleUser = {
-  accountNo: 'ACC-1',
-  email: 'user@example.com',
-  role: ['user'],
-  exp: 1_700_000_000,
+const sampleUser: UserResponse = {
+  id: 1,
+  role_id: 1,
+  role_name: 'admin',
+  name: 'Editorial Admin',
+  email: 'admin@newsportal.id',
+  is_active: true,
+  created_at: '2026-01-01T00:00:00Z',
 }
 
 describe('useAuthStore', () => {
   beforeEach(() => {
     clearCookies()
+    const g = globalThis as unknown as { __NEWSROOM_STORAGE__?: Record<string, string> }
+    g.__NEWSROOM_STORAGE__ = {}
     vi.resetModules()
   })
 

@@ -66,6 +66,7 @@ func (u *ArticleAdminUsecase) invalidateCache(ctx context.Context, artSlug strin
 	)
 	_ = u.cache.DeletePattern(ctx, "news:v1:feed:articles:*")
 	_ = u.cache.DeletePattern(ctx, fmt.Sprintf("news:v1:feed:category:%d:*", categoryID))
+	_ = u.cache.DeletePattern(ctx, "news:v1:feed:author:*")
 }
 
 func (u *ArticleAdminUsecase) Create(ctx context.Context, req *dto.ArticleUpsertRequest, userID uint64, ip string, ua string) (*dto.ArticleResponse, error) {
@@ -77,6 +78,13 @@ func (u *ArticleAdminUsecase) Create(ctx context.Context, req *dto.ArticleUpsert
 
 	// Sanitize body HTML
 	cleanBody := sanitize.HTML(req.Body)
+
+	// If status is published and published_at is not specified, default to now
+	pubAt := req.PublishedAt
+	if pubAt == nil && req.Status == "published" {
+		now := time.Now()
+		pubAt = &now
+	}
 
 	art := &article.Article{
 		Title:          req.Title,
@@ -90,7 +98,7 @@ func (u *ArticleAdminUsecase) Create(ctx context.Context, req *dto.ArticleUpsert
 		Status:         article.Status(req.Status),
 		IsHeadline:     req.IsHeadline,
 		IsBreaking:     req.IsBreaking,
-		PublishedAt:    req.PublishedAt,
+		PublishedAt:    pubAt,
 		SEOTitle:       req.SEOTitle,
 		SEODescription: req.SEODescription,
 	}
@@ -162,8 +170,12 @@ func (u *ArticleAdminUsecase) Update(ctx context.Context, id uint64, req *dto.Ar
 	existing.AuthorID = req.AuthorID
 	existing.Status = article.Status(req.Status)
 	existing.IsHeadline = req.IsHeadline
-	existing.IsBreaking = req.IsBreaking
-	existing.PublishedAt = req.PublishedAt
+	if req.PublishedAt != nil {
+		existing.PublishedAt = req.PublishedAt
+	} else if existing.Status == "published" && existing.PublishedAt == nil {
+		now := time.Now()
+		existing.PublishedAt = &now
+	}
 	existing.SEOTitle = req.SEOTitle
 	existing.SEODescription = req.SEODescription
 

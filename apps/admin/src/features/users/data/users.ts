@@ -1,33 +1,40 @@
-import { faker } from '@faker-js/faker'
+import { User } from './schema'
 
-// Set a fixed seed for consistent data generation
-faker.seed(67890)
-
-export const users = Array.from({ length: 500 }, () => {
-  const firstName = faker.person.firstName()
-  const lastName = faker.person.lastName()
-  return {
-    id: faker.string.uuid(),
-    firstName,
-    lastName,
-    username: faker.internet
-      .username({ firstName, lastName })
-      .toLocaleLowerCase(),
-    email: faker.internet.email({ firstName }).toLocaleLowerCase(),
-    phoneNumber: faker.phone.number({ style: 'international' }),
-    status: faker.helpers.arrayElement([
-      'active',
-      'inactive',
-      'invited',
-      'suspended',
-    ]),
-    role: faker.helpers.arrayElement([
-      'superadmin',
-      'admin',
-      'cashier',
-      'manager',
-    ]),
-    createdAt: faker.date.past(),
-    updatedAt: faker.date.recent(),
-  }
-})
+export const users: User[] = [
+  {
+    id: 'u-1',
+    firstName: 'Admin',
+    lastName: 'Newsroom',
+    username: 'admin',
+    email: 'admin@newsportal.id',
+    phoneNumber: '+628123456789',
+    status: 'active',
+    role: 'superadmin',
+    createdAt: new Date('2026-01-01'),
+    updatedAt: new Date('2026-01-01'),
+  },
+  {
+    id: 'u-2',
+    firstName: 'Editor',
+    lastName: 'Chief',
+    username: 'editor',
+    email: 'editor@newsportal.id',
+    phoneNumber: '+628123456790',
+    status: 'active',
+    role: 'admin',
+    createdAt: new Date('2026-01-02'),
+    updatedAt: new Date('2026-01-02'),
+  },
+  {
+    id: 'u-3',
+    firstName: 'Rina',
+    lastName: 'Wijaya',
+    username: 'rina-wijaya',
+    email: 'rina.wijaya@newsportal.id',
+    phoneNumber: '+628123456791',
+    status: 'active',
+    role: 'manager',
+    createdAt: new Date('2026-01-03'),
+    updatedAt: new Date('2026-01-03'),
+  },
+]

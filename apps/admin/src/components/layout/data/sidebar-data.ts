@@ -1,56 +1,34 @@
 import {
-  Construction,
   LayoutDashboard,
-  Monitor,
-  Bug,
-  ListTodo,
-  FileX,
-  HelpCircle,
-  Lock,
-  Bell,
-  Package,
-  Palette,
-  ServerOff,
+  Newspaper,
+  FilePlus,
+  Image,
+  FolderTree,
+  Tag,
+  UserCheck,
+  ArrowLeftRight,
   Settings,
-  Wrench,
-  UserCog,
-  UserX,
   Users,
-  MessagesSquare,
-  ShieldCheck,
-  AudioWaveform,
-  Command,
-  GalleryVerticalEnd,
+  Building2,
 } from 'lucide-react'
-import { ClerkLogo } from '@/assets/clerk-logo'
 import { type SidebarData } from '../types'
 
 export const sidebarData: SidebarData = {
   user: {
-    name: 'satnaing',
-    email: 'satnaingdev@gmail.com',
-    avatar: '/avatars/shadcn.jpg',
+    name: 'Editorial Admin',
+    email: 'admin@newsportal.id',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
   },
   teams: [
     {
-      name: 'Shadcn Admin',
-      logo: Command,
-      plan: 'Vite + ShadcnUI',
-    },
-    {
-      name: 'Acme Inc',
-      logo: GalleryVerticalEnd,
-      plan: 'Enterprise',
-    },
-    {
-      name: 'Acme Corp.',
-      logo: AudioWaveform,
-      plan: 'Startup',
+      name: 'NewsPortal Editorial',
+      logo: Building2,
+      plan: 'Newsroom Pro',
     },
   ],
   navGroups: [
     {
-      title: 'General',
+      title: 'Editorial Newsroom',
       items: [
         {
           title: 'Dashboard',
@@ -58,146 +36,59 @@ export const sidebarData: SidebarData = {
           icon: LayoutDashboard,
         },
         {
-          title: 'Tasks',
-          url: '/tasks',
-          icon: ListTodo,
+          title: 'All Articles',
+          url: '/articles',
+          icon: Newspaper,
         },
         {
-          title: 'Apps',
-          url: '/apps',
-          icon: Package,
+          title: 'New Article',
+          url: '/articles/new',
+          icon: FilePlus,
         },
         {
-          title: 'Chats',
-          url: '/chats',
-          badge: '3',
-          icon: MessagesSquare,
+          title: 'Media Library',
+          url: '/media',
+          icon: Image,
+        },
+      ],
+    },
+    {
+      title: 'Taxonomy & Authors',
+      items: [
+        {
+          title: 'Categories',
+          url: '/categories',
+          icon: FolderTree,
         },
         {
-          title: 'Users',
+          title: 'Tags',
+          url: '/tags',
+          icon: Tag,
+        },
+        {
+          title: 'Authors',
+          url: '/authors',
+          icon: UserCheck,
+        },
+      ],
+    },
+    {
+      title: 'Site Management',
+      items: [
+        {
+          title: '301 Redirects',
+          url: '/redirects',
+          icon: ArrowLeftRight,
+        },
+        {
+          title: 'Team Users',
           url: '/users',
           icon: Users,
         },
         {
-          title: 'Secured by Clerk',
-          icon: ClerkLogo,
-          items: [
-            {
-              title: 'Sign In',
-              url: '/clerk/sign-in',
-            },
-            {
-              title: 'Sign Up',
-              url: '/clerk/sign-up',
-            },
-            {
-              title: 'User Management',
-              url: '/clerk/user-management',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      title: 'Pages',
-      items: [
-        {
-          title: 'Auth',
-          icon: ShieldCheck,
-          items: [
-            {
-              title: 'Sign In',
-              url: '/sign-in',
-            },
-            {
-              title: 'Sign In (2 Col)',
-              url: '/sign-in-2',
-            },
-            {
-              title: 'Sign Up',
-              url: '/sign-up',
-            },
-            {
-              title: 'Forgot Password',
-              url: '/forgot-password',
-            },
-            {
-              title: 'OTP',
-              url: '/otp',
-            },
-          ],
-        },
-        {
-          title: 'Errors',
-          icon: Bug,
-          items: [
-            {
-              title: 'Unauthorized',
-              url: '/errors/unauthorized',
-              icon: Lock,
-            },
-            {
-              title: 'Forbidden',
-              url: '/errors/forbidden',
-              icon: UserX,
-            },
-            {
-              title: 'Not Found',
-              url: '/errors/not-found',
-              icon: FileX,
-            },
-            {
-              title: 'Internal Server Error',
-              url: '/errors/internal-server-error',
-              icon: ServerOff,
-            },
-            {
-              title: 'Maintenance Error',
-              url: '/errors/maintenance-error',
-              icon: Construction,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      title: 'Other',
-      items: [
-        {
           title: 'Settings',
+          url: '/settings',
           icon: Settings,
-          items: [
-            {
-              title: 'Profile',
-              url: '/settings',
-              icon: UserCog,
-            },
-            {
-              title: 'Account',
-              url: '/settings/account',
-              icon: Wrench,
-            },
-            {
-              title: 'Appearance',
-              url: '/settings/appearance',
-              icon: Palette,
-            },
-            {
-              title: 'Notifications',
-              url: '/settings/notifications',
-              icon: Bell,
-            },
-            {
-              title: 'Display',
-              url: '/settings/display',
-              icon: Monitor,
-            },
-          ],
-        },
-        {
-          title: 'Help Center',
-          url: '/help-center',
-          icon: HelpCircle,
         },
       ],
     },
