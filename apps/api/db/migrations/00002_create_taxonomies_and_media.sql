@@ -1,0 +1,68 @@
+-- +goose Up
+-- Create media table
+CREATE TABLE IF NOT EXISTS media (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    filename VARCHAR(255) NOT NULL,
+    file_path VARCHAR(500) NOT NULL,
+    mime_type VARCHAR(50) NOT NULL,
+    size_bytes BIGINT UNSIGNED NOT NULL,
+    width INT UNSIGNED NOT NULL DEFAULT 0,
+    height INT UNSIGNED NOT NULL DEFAULT 0,
+    alt_text VARCHAR(255) NOT NULL,
+    caption TEXT NULL,
+    photographer VARCHAR(150) NULL,
+    variants JSON NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE INDEX idx_media_created ON media (created_at DESC);
+
+-- Create authors table
+CREATE TABLE IF NOT EXISTS authors (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NULL,
+    name VARCHAR(100) NOT NULL,
+    slug VARCHAR(120) NOT NULL UNIQUE,
+    bio TEXT NULL,
+    avatar_media_id BIGINT UNSIGNED NULL,
+    social_links JSON NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_authors_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL,
+    CONSTRAINT fk_authors_avatar FOREIGN KEY (avatar_media_id) REFERENCES media (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE INDEX idx_authors_user ON authors (user_id);
+
+-- Create categories table
+CREATE TABLE IF NOT EXISTS categories (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    slug VARCHAR(120) NOT NULL UNIQUE,
+    description TEXT NULL,
+    parent_id BIGINT UNSIGNED NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    is_nav BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_categories_parent FOREIGN KEY (parent_id) REFERENCES categories (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE INDEX idx_categories_parent ON categories (parent_id);
+CREATE INDEX idx_categories_nav ON categories (is_nav, sort_order ASC);
+
+-- Create tags table
+CREATE TABLE IF NOT EXISTS tags (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    slug VARCHAR(120) NOT NULL UNIQUE,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- +goose Down
+DROP TABLE IF EXISTS tags;
+DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS authors;
+DROP TABLE IF EXISTS media;

@@ -42,15 +42,19 @@ lint:
 
 migrate-up:
 	@echo "==> Running database migrations UP..."
-	cd apps/api/db && $(GOOSE) mysql $(DB_DSN) up
+	cd apps/api/db && $(GOOSE) -dir migrations mysql $(DB_DSN) up
 
 migrate-down:
 	@echo "==> Rolling back 1 database migration..."
-	cd apps/api/db && $(GOOSE) mysql $(DB_DSN) down
+	cd apps/api/db && $(GOOSE) -dir migrations mysql $(DB_DSN) down
 
 migrate-status:
 	@echo "==> Checking migration status..."
-	cd apps/api/db && $(GOOSE) mysql $(DB_DSN) status
+	cd apps/api/db && $(GOOSE) -dir migrations mysql $(DB_DSN) status
+
+seed:
+	@echo "==> Running database seeder (>= 1,000 articles)..."
+	cd apps/api && go run ./cmd/seed/main.go
 
 sqlc:
 	@echo "==> Generating type-safe SQL queries with sqlc..."

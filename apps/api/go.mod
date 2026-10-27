@@ -9,6 +9,7 @@ require (
 	github.com/go-sql-driver/mysql v1.10.1
 	github.com/redis/go-redis/v9 v9.23.0
 	github.com/stretchr/testify v1.12.1
+	golang.org/x/crypto v0.58.0
 )
 
 require (
