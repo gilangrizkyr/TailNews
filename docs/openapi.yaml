@@ -1,0 +1,757 @@
+openapi: 3.0.3
+info:
+  title: Enterprise News Portal API
+  description: >
+    Production-grade RESTful API for modern high-performance news portal platform.
+    Adheres to Clean Architecture, strict typing, and high-concurrency event-driven invalidation.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Local Development Server
+  - url: https://api.newsportal.id
+    description: Production Server
+
+paths:
+  /healthz:
+    get:
+      summary: Liveness Probe
+      description: Returns 200 OK if the API server instance is alive.
+      responses:
+        '200':
+          description: Server is running healthy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+
+  /readyz:
+    get:
+      summary: Readiness Probe
+      description: Verifies active connectivity to MySQL database and Redis cluster.
+      responses:
+        '200':
+          description: All critical dependencies are connected.
+        '503':
+          description: One or more critical dependencies are down.
+
+  /api/v1/ping:
+    get:
+      summary: API Ping Test
+      responses:
+        '200':
+          description: Pong response.
+
+  /api/v1/auth/login:
+    post:
+      summary: User Login
+      description: Authenticates user credentials via Argon2id and returns an access token with an HttpOnly refresh cookie.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Successful authentication.
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: refresh_token=eyJhbGciOi...; Path=/api/v1/auth; HttpOnly; SameSite=Lax
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponseEnvelope'
+        '401':
+          description: Invalid email, password, or locked account.
+
+  /api/v1/auth/refresh:
+    post:
+      summary: Refresh Access Token
+      description: Uses the HttpOnly refresh token cookie to issue a new access token.
+      responses:
+        '200':
+          description: New access token issued.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponseEnvelope'
+        '401':
+          description: Refresh token invalid or expired.
+
+  /api/v1/auth/logout:
+    post:
+      summary: User Logout
+      description: Clears the HttpOnly refresh token cookie.
+      responses:
+        '200':
+          description: Logout successful.
+
+  /api/v1/auth/me:
+    get:
+      summary: Get Current Profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Authenticated user details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponseEnvelope'
+        '401':
+          description: Unauthorized.
+
+  /api/v1/admin/dashboard/stats:
+    get:
+      summary: Newsroom Dashboard Statistics
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Realtime article and view aggregates.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardStatsResponseEnvelope'
+
+  /api/v1/admin/articles:
+    get:
+      summary: List Articles for Admin
+      description: Returns paginated list of articles across all statuses.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of articles.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ArticleResponse'
+    post:
+      summary: Create Article
+      description: Creates a draft, review, scheduled, or published article. Automatically generates URL slug and sanitizes HTML.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleUpsertRequest'
+      responses:
+        '201':
+          description: Article successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleResponseEnvelope'
+
+  /api/v1/admin/articles/{id}:
+    get:
+      summary: Get Article Details by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Complete article metadata and tags.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleResponseEnvelope'
+        '404':
+          description: Article not found.
+    put:
+      summary: Update Article
+      description: Updates article. If slug changed, automatically records a 301 redirect. Creates revision snapshot.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleUpsertRequest'
+      responses:
+        '200':
+          description: Article updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleResponseEnvelope'
+    delete:
+      summary: Soft Delete Article
+      description: Soft deletes the article by setting deleted_at timestamp.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Article marked as deleted.
+
+  /api/v1/admin/articles/{id}/revisions:
+    get:
+      summary: List Article Revisions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Revision history list.
+
+  /api/v1/admin/articles/{id}/restore/{revision_id}:
+    post:
+      summary: Restore Article Revision
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: revision_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Article content restored to selected revision snapshot.
+
+  /api/v1/admin/articles/{id}/preview-token:
+    post:
+      summary: Generate Short-Lived Draft Preview Token
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Signed HMAC preview token.
+
+  /api/v1/admin/categories:
+    get:
+      summary: List Categories
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of categories.
+    post:
+      summary: Create Category
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+      responses:
+        '201':
+          description: Category created.
+
+  /api/v1/admin/categories/{id}:
+    put:
+      summary: Update Category
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+      responses:
+        '200':
+          description: Category updated.
+    delete:
+      summary: Delete Category
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Category deleted.
+
+  /api/v1/admin/tags:
+    get:
+      summary: List Tags
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of tags.
+    post:
+      summary: Create Tag
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagRequest'
+      responses:
+        '201':
+          description: Tag created.
+
+  /api/v1/admin/tags/{id}:
+    delete:
+      summary: Delete Tag
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Tag deleted.
+
+  /api/v1/admin/authors:
+    get:
+      summary: List Authors
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of authors.
+    post:
+      summary: Create Author
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthorRequest'
+      responses:
+        '201':
+          description: Author created.
+
+  /api/v1/admin/authors/{id}:
+    put:
+      summary: Update Author
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthorRequest'
+      responses:
+        '200':
+          description: Author updated.
+
+  /api/v1/admin/media/upload:
+    post:
+      summary: Upload Media Image
+      description: Uploads image file (JPEG, PNG, WebP), strips EXIF metadata, resizes into variants, and returns media record.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+                - alt_text
+              properties:
+                file:
+                  type: string
+                  format: binary
+                alt_text:
+                  type: string
+                caption:
+                  type: string
+                photographer:
+                  type: string
+      responses:
+        '201':
+          description: Media uploaded and processed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaResponseEnvelope'
+
+  /api/v1/admin/media:
+    get:
+      summary: List Media Library
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Paginated media list.
+
+  /api/v1/admin/media/{id}:
+    delete:
+      summary: Delete Media
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Media record and image files deleted.
+
+  /api/v1/admin/redirects:
+    get:
+      summary: List Redirects
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of 301/302 redirects.
+    post:
+      summary: Create or Update Redirect
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RedirectRequest'
+      responses:
+        '200':
+          description: Redirect created or updated.
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    SuccessEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: admin@newsportal.id
+        password:
+          type: string
+          format: password
+          example: AdminSecret123!
+
+    AuthResponseEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            access_token:
+              type: string
+            expires_in:
+              type: integer
+              example: 900
+            user:
+              $ref: '#/components/schemas/UserResponse'
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role_name:
+          type: string
+        is_active:
+          type: boolean
+
+    UserResponseEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/UserResponse'
+
+    ArticleUpsertRequest:
+      type: object
+      required:
+        - title
+        - excerpt
+        - body
+        - category_id
+        - author_id
+        - status
+      properties:
+        title:
+          type: string
+        slug:
+          type: string
+        excerpt:
+          type: string
+        body:
+          type: string
+        cover_media_id:
+          type: integer
+        category_id:
+          type: integer
+        author_id:
+          type: integer
+        status:
+          type: string
+          enum: [draft, review, scheduled, published]
+        is_headline:
+          type: boolean
+        is_breaking:
+          type: boolean
+        published_at:
+          type: string
+          format: date-time
+        seo_title:
+          type: string
+        seo_description:
+          type: string
+        tag_ids:
+          type: array
+          items:
+            type: integer
+
+    ArticleResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        slug:
+          type: string
+        excerpt:
+          type: string
+        body:
+          type: string
+        cover_url:
+          type: string
+        category_name:
+          type: string
+        author_name:
+          type: string
+        status:
+          type: string
+        is_headline:
+          type: boolean
+        is_breaking:
+          type: boolean
+        view_count:
+          type: integer
+        published_at:
+          type: string
+          format: date-time
+
+    ArticleResponseEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/ArticleResponse'
+
+    CategoryRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        sort_order:
+          type: integer
+        is_nav:
+          type: boolean
+
+    TagRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+
+    AuthorRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        bio:
+          type: string
+        avatar_media_id:
+          type: integer
+
+    RedirectRequest:
+      type: object
+      required:
+        - from_path
+        - to_path
+        - http_status
+      properties:
+        from_path:
+          type: string
+          example: /berita-lama
+        to_path:
+          type: string
+          example: /berita-baru
+        http_status:
+          type: integer
+          enum: [301, 302]
+          example: 301
+
+    MediaResponseEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+            file_path:
+              type: string
+            alt_text:
+              type: string
+            variants:
+              type: object
+
+    DashboardStatsResponseEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            total_articles:
+              type: integer
+            published_articles:
+              type: integer
+            draft_articles:
+              type: integer
+            scheduled_articles:
+              type: integer
+            total_views:
+              type: integer
+            total_categories:
+              type: integer
+            total_authors:
+              type: integer
+            total_media:
+              type: integer

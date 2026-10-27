@@ -1038,6 +1038,46 @@ func (r *articleRepo) ListRevisions(ctx context.Context, articleID uint64) ([]*a
 	return res, nil
 }
 
+func (r *articleRepo) ListAdmin(ctx context.Context, limit int32, offset int32) ([]*article.Article, error) {
+	rows, err := r.q.ListArticlesAdmin(ctx, ListArticlesAdminParams{
+		Limit:  limit,
+		Offset: offset,
+	})
+	if err != nil {
+		return nil, err
+	}
+	items := make([]*article.Article, len(rows))
+	for i, row := range rows {
+		var coverID *uint64
+		if row.CoverMediaID.Valid {
+			cid := uint64(row.CoverMediaID.Int64)
+			coverID = &cid
+		}
+		var pubAt *time.Time
+		if row.PublishedAt.Valid {
+			pubAt = &row.PublishedAt.Time
+		}
+		items[i] = &article.Article{
+			ID:           row.ID,
+			Title:        row.Title,
+			Slug:         row.Slug,
+			Excerpt:      row.Excerpt,
+			CoverMediaID: coverID,
+			CategoryID:   row.CategoryID,
+			AuthorID:     row.AuthorID,
+			CreatedBy:    row.CreatedBy,
+			Status:       article.Status(row.Status),
+			IsHeadline:   row.IsHeadline,
+			IsBreaking:   row.IsBreaking,
+			ViewCount:    row.ViewCount,
+			PublishedAt:  pubAt,
+			CreatedAt:    row.CreatedAt,
+			UpdatedAt:    row.UpdatedAt,
+		}
+	}
+	return items, nil
+}
+
 func mapArticleRow(row *Articles) *article.Article {
 	var coverID *uint64
 	if row.CoverMediaID.Valid {

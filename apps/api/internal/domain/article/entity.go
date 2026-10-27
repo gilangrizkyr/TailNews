@@ -110,4 +110,7 @@ type Repository interface {
 	GetTags(ctx context.Context, articleID uint64) ([]*tag.Tag, error)
 	CreateRevision(ctx context.Context, rev *ArticleRevision) (uint64, error)
 	ListRevisions(ctx context.Context, articleID uint64) ([]*ArticleRevision, error)
+
+	// Admin
+	ListAdmin(ctx context.Context, limit int32, offset int32) ([]*Article, error)
 }
