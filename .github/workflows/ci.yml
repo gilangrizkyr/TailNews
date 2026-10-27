@@ -1,0 +1,57 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  backend-quality:
+    name: Backend Lint & Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: true
+          cache-dependency-path: apps/api/go.sum
+
+      - name: Go vet
+        run: |
+          cd apps/api
+          go vet ./...
+
+      - name: Run Backend Tests
+        run: |
+          cd apps/api
+          go test -v -race ./...
+
+      - name: Build API Binary
+        run: |
+          cd apps/api
+          CGO_ENABLED=0 go build -v -o /dev/null ./cmd/server/main.go
+
+  security-scan:
+    name: Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+
+      - name: Run govulncheck
+        run: |
+          cd apps/api
+          govulncheck ./...
