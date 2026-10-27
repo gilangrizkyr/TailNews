@@ -1,0 +1,106 @@
+---
+import type { Article } from '../lib/api';
+import { formatDate } from '../lib/api';
+
+interface Props {
+  articles?: Article[];
+}
+
+const { articles = [] } = Astro.props;
+// Use up to 4 articles for the multimedia visual strip
+const mediaArticles = articles.slice(0, 4);
+---
+
+{mediaArticles.length > 0 && (
+  <section class="bg-gray-950 py-12 text-white border-y border-gray-800 relative overflow-hidden">
+    <!-- Subtle ambient background glow -->
+    <div class="absolute -top-24 -left-24 w-96 h-96 bg-red-600/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="xl:container mx-auto px-3 sm:px-4 xl:px-2 relative z-10">
+      <!-- Section Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-8 border-b border-gray-800 gap-3">
+        <div class="flex items-center space-x-3">
+          <span class="flex h-3 w-3 relative">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
+          </span>
+          <h2 class="text-xl sm:text-2xl font-black uppercase tracking-wider text-white">
+            Lensa Berita &amp; Multimedia
+          </h2>
+          <span class="hidden md:inline-block text-xs bg-red-600/20 text-red-400 border border-red-500/30 px-2 py-0.5 rounded font-mono font-semibold">
+            VISUAL EXCLUSIVE
+          </span>
+        </div>
+        <p class="text-xs text-gray-400">
+          Dokumentasi liputan visual terkurasi dari tim redaksi
+        </p>
+      </div>
+
+      <!-- 4-Grid Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {mediaArticles.map((art, idx) => (
+          <article class="group relative flex flex-col bg-gray-900 rounded-sm overflow-hidden border border-gray-800/80 hover:border-gray-700 transition-all duration-300 hover:shadow-xl hover:shadow-red-950/20">
+            <!-- Media Visual Container with Aspect 16:9 -->
+            <div class="relative aspect-video w-full overflow-hidden bg-gray-900">
+              <a href={`/${art.slug}`} class="block w-full h-full">
+                <img
+                  src={art.cover_url || '/img/bg.jpg'}
+                  alt={art.title}
+                  width="480"
+                  height="270"
+                  class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  loading="lazy"
+                />
+              </a>
+
+              <!-- Gradient Vignette -->
+              <div class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/40 to-transparent pointer-events-none"></div>
+
+              <!-- Media Type Icon Badge (Alternates Play / Camera) -->
+              <div class="absolute top-3 right-3 z-10">
+                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-black/70 backdrop-blur-sm text-white group-hover:bg-red-600 group-hover:scale-110 transition-all duration-300 shadow-md">
+                  {idx % 2 === 0 ? (
+                    <svg class="w-3.5 h-3.5 fill-current ml-0.5" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  ) : (
+                    <svg class="w-3.5 h-3.5 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <circle cx="12" cy="13" r="3" />
+                    </svg>
+                  )}
+                </span>
+              </div>
+
+              <!-- Category Tag -->
+              {art.category_name && (
+                <div class="absolute bottom-3 left-3 z-10">
+                  <span class="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 bg-red-600 text-white rounded-sm shadow-sm">
+                    {art.category_name}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <!-- Content Area -->
+            <div class="p-4 flex-1 flex flex-col justify-between bg-gray-900/90">
+              <h3 class="text-sm font-bold text-gray-100 group-hover:text-red-400 line-clamp-2 leading-snug transition-colors mb-2">
+                <a href={`/${art.slug}`}>
+                  {art.title}
+                </a>
+              </h3>
+
+              <div class="flex items-center justify-between text-[11px] text-gray-400 pt-3 border-t border-gray-800/80 mt-auto">
+                <span class="truncate max-w-[120px] font-medium text-gray-300">
+                  {art.author_name || 'Redaksi'}
+                </span>
+                <span>{formatDate(art.published_at)}</span>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+)}

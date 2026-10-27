@@ -1,7 +1,14 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Sidebar from '../components/Sidebar.astro';
-import { getArticleBySlug, getCategories, getTrending, formatDate, estimateReadingTime } from '../lib/api';
+import {
+  getArticleBySlug,
+  getCategories,
+  getTrending,
+  getArticlesByCategory,
+  formatDate,
+  estimateReadingTime,
+} from '../lib/api';
 
 const { slug } = Astro.params;
 if (!slug) {
@@ -21,6 +28,23 @@ if (!article) {
   return Astro.redirect('/404');
 }
 
+// Fetch related articles from same category
+let relatedArticles: any[] = [];
+if (article.category_slug) {
+  const catRes = await getArticlesByCategory(article.category_slug, undefined, 4);
+  relatedArticles = (catRes?.articles || [])
+    .filter((a) => a.id !== article.id)
+    .slice(0, 3);
+}
+
+// Fallback to trending articles if category has fewer than 3 related articles
+if (relatedArticles.length < 3) {
+  const remainingCount = 3 - relatedArticles.length;
+  const existingIds = new Set([article.id, ...relatedArticles.map((a) => a.id)]);
+  const fallback = trending.filter((a) => !existingIds.has(a.id)).slice(0, remainingCount);
+  relatedArticles = [...relatedArticles, ...fallback];
+}
+
 const formattedDate = formatDate(article.published_at);
 const readingTime = estimateReadingTime(article.body || article.excerpt);
 const currentUrl = Astro.url.href;
@@ -38,6 +62,13 @@ const currentUrl = Astro.url.href;
   activeCategory={article.category_slug}
   preloadImage={article.cover_url}
 >
+  <!-- Fixed Reading Progress Indicator -->
+  <div
+    id="reading-progress-bar"
+    class="fixed top-0 left-0 h-1 bg-red-600 z-[9999] transition-all duration-75 pointer-events-none"
+    style="width: 0%"
+  ></div>
+
   <div class="bg-gray-50 py-8">
     <div class="xl:container mx-auto px-3 sm:px-4 xl:px-2">
       <!-- Breadcrumb -->
@@ -87,8 +118,8 @@ const currentUrl = Astro.url.href;
             </p>
           )}
 
-          <!-- Author Byline & Date -->
-          <div class="flex flex-wrap items-center justify-between py-3 mb-6 border-y border-gray-100 text-xs text-gray-500 gap-2">
+          <!-- Author Byline, Reading Time & Social Share Bar -->
+          <div class="flex flex-wrap items-center justify-between py-3 mb-4 border-y border-gray-100 text-xs text-gray-500 gap-2">
             <div class="flex items-center space-x-3">
               {article.author_name && (
                 <div class="flex items-center space-x-2">
@@ -127,6 +158,59 @@ const currentUrl = Astro.url.href;
             </div>
           </div>
 
+          <!-- Accessibility & Audio Reader Toolbar -->
+          <div class="flex flex-wrap items-center justify-between bg-gray-50 border border-gray-200/80 px-4 py-2.5 rounded-sm mb-6 gap-3">
+            <!-- Simulated Audio Reader -->
+            <div class="flex items-center gap-2.5">
+              <button
+                id="btn-play-audio"
+                type="button"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-black hover:bg-red-600 text-white text-xs font-bold uppercase tracking-wider rounded-sm transition-colors cursor-pointer"
+              >
+                <svg id="icon-play" class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+                <svg id="icon-pause" class="w-3.5 h-3.5 fill-current hidden" viewBox="0 0 24 24">
+                  <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                </svg>
+                <span id="audio-label">Dengarkan Berita</span>
+              </button>
+              <div id="audio-wave" class="hidden items-center gap-1">
+                <span class="w-1 h-3 bg-red-600 animate-pulse"></span>
+                <span class="w-1 h-5 bg-red-600 animate-pulse delay-75"></span>
+                <span class="w-1 h-2 bg-red-600 animate-pulse delay-150"></span>
+                <span class="w-1 h-4 bg-red-600 animate-pulse delay-100"></span>
+                <span class="text-[11px] text-gray-500 font-mono ml-1">01:45</span>
+              </div>
+            </div>
+
+            <!-- Text Size Controls -->
+            <div class="flex items-center gap-1 text-xs text-gray-600">
+              <span class="text-gray-400 text-[11px] mr-1">Ukuran Huruf:</span>
+              <button
+                id="font-sm"
+                type="button"
+                class="px-2 py-1 bg-white border border-gray-200 hover:border-black rounded-xs font-bold text-[11px] cursor-pointer"
+              >
+                A-
+              </button>
+              <button
+                id="font-md"
+                type="button"
+                class="px-2 py-1 bg-black text-white border border-black rounded-xs font-bold text-xs cursor-pointer"
+              >
+                A
+              </button>
+              <button
+                id="font-lg"
+                type="button"
+                class="px-2 py-1 bg-white border border-gray-200 hover:border-black rounded-xs font-bold text-sm cursor-pointer"
+              >
+                A+
+              </button>
+            </div>
+          </div>
+
           <!-- Featured Image Cover -->
           <div class="mb-8">
             <div class="overflow-hidden bg-gray-100 rounded-sm">
@@ -148,7 +232,11 @@ const currentUrl = Astro.url.href;
           </div>
 
           <!-- Article Body HTML -->
-          <div class="prose max-w-none text-gray-800 leading-relaxed space-y-4" set:html={article.body} />
+          <div
+            id="article-content-body"
+            class="prose prose-neutral max-w-none text-gray-800 leading-relaxed space-y-4 text-base transition-all duration-200"
+            set:html={article.body}
+          />
 
           <!-- Tags -->
           {article.tags && article.tags.length > 0 && (
@@ -169,7 +257,7 @@ const currentUrl = Astro.url.href;
 
           <!-- Author Box -->
           {article.author_name && (
-            <div class="mt-10 p-5 bg-gray-50 border border-gray-200 rounded-sm flex items-start space-x-4">
+            <div class="mt-8 p-5 bg-gray-50 border border-gray-200 rounded-sm flex items-start space-x-4">
               <div class="w-14 h-14 rounded-full bg-gray-300 flex-shrink-0 flex items-center justify-center font-bold text-gray-700 text-xl overflow-hidden">
                 {article.author_name.charAt(0)}
               </div>
@@ -190,6 +278,55 @@ const currentUrl = Astro.url.href;
               </div>
             </div>
           )}
+
+          <!-- Rekomendasi Berita Terkait Lainnya (3-Card Grid) -->
+          {relatedArticles.length > 0 && (
+            <div class="mt-12 pt-8 border-t-2 border-red-600">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-black uppercase tracking-wider text-gray-950 flex items-center gap-2">
+                  <span class="w-2.5 h-4 bg-red-600 inline-block"></span>
+                  Berita Terkait Lainnya
+                </h3>
+                <span class="text-xs text-gray-400 font-semibold uppercase tracking-wider">
+                  Rekomendasi Redaksi
+                </span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                {relatedArticles.map((rel) => (
+                  <article class="group flex flex-col bg-white border border-gray-100 rounded-sm overflow-hidden hover:shadow-md transition-shadow">
+                    <div class="aspect-video w-full overflow-hidden bg-gray-100">
+                      <a href={`/${rel.slug}`} class="block w-full h-full">
+                        <img
+                          src={rel.cover_url || '/img/bg.jpg'}
+                          alt={rel.title}
+                          width="300"
+                          height="169"
+                          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                        />
+                      </a>
+                    </div>
+                    <div class="p-3 flex-1 flex flex-col justify-between">
+                      {rel.category_name && (
+                        <span class="text-[10px] font-bold text-red-600 uppercase tracking-wider mb-1 block">
+                          {rel.category_name}
+                        </span>
+                      )}
+                      <h4 class="text-xs sm:text-sm font-bold text-gray-900 group-hover:text-red-600 line-clamp-2 leading-snug transition-colors mb-2">
+                        <a href={`/${rel.slug}`}>
+                          {rel.title}
+                        </a>
+                      </h4>
+                      <span class="text-[10px] text-gray-400 mt-auto">
+                        {formatDate(rel.published_at)}
+                      </span>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          )}
         </article>
 
         <!-- Sidebar -->
@@ -200,10 +337,79 @@ const currentUrl = Astro.url.href;
     </div>
   </div>
 
-  <!-- Real-Time View Tracking Script (Deduplicated on Go API) -->
+  <!-- Interactive Scripts: Reading Progress Bar, Font Sizer, Audio Simulation, View Tracking -->
   <script is:inline define:vars={{ articleId: article.id }}>
-    window.addEventListener('DOMContentLoaded', () => {
-      // Send view ping after reader settles on page for 1.5s
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Reading Progress Bar
+      const progressBar = document.getElementById('reading-progress-bar');
+      window.addEventListener('scroll', () => {
+        const docElem = document.documentElement;
+        const totalHeight = docElem.scrollHeight - docElem.clientHeight;
+        if (totalHeight > 0 && progressBar) {
+          const scrollPercent = (window.scrollY / totalHeight) * 100;
+          progressBar.style.width = Math.min(scrollPercent, 100) + '%';
+        }
+      });
+
+      // 2. Font Sizer
+      const content = document.getElementById('article-content-body');
+      const btnSm = document.getElementById('font-sm');
+      const btnMd = document.getElementById('font-md');
+      const btnLg = document.getElementById('font-lg');
+
+      const setFont = (sizeClass, activeBtn) => {
+        if (!content) return;
+        content.classList.remove('text-sm', 'text-base', 'text-lg', 'text-xl');
+        content.classList.add(sizeClass);
+
+        [btnSm, btnMd, btnLg].forEach((b) => {
+          if (b) {
+            b.classList.remove('bg-black', 'text-white', 'border-black');
+            b.classList.add('bg-white', 'text-gray-600', 'border-gray-200');
+          }
+        });
+        if (activeBtn) {
+          activeBtn.classList.remove('bg-white', 'text-gray-600', 'border-gray-200');
+          activeBtn.classList.add('bg-black', 'text-white', 'border-black');
+        }
+      };
+
+      if (btnSm) btnSm.addEventListener('click', () => setFont('text-sm', btnSm));
+      if (btnMd) btnMd.addEventListener('click', () => setFont('text-base', btnMd));
+      if (btnLg) btnLg.addEventListener('click', () => setFont('text-lg', btnLg));
+
+      // 3. Audio Reader Simulation
+      const btnAudio = document.getElementById('btn-play-audio');
+      const iconPlay = document.getElementById('icon-play');
+      const iconPause = document.getElementById('icon-pause');
+      const wave = document.getElementById('audio-wave');
+      const label = document.getElementById('audio-label');
+      let isPlaying = false;
+
+      if (btnAudio) {
+        btnAudio.addEventListener('click', () => {
+          isPlaying = !isPlaying;
+          if (isPlaying) {
+            if (iconPlay) iconPlay.classList.add('hidden');
+            if (iconPause) iconPause.classList.remove('hidden');
+            if (wave) {
+              wave.classList.remove('hidden');
+              wave.classList.add('flex');
+            }
+            if (label) label.textContent = 'Jeda Audio';
+          } else {
+            if (iconPlay) iconPlay.classList.remove('hidden');
+            if (iconPause) iconPause.classList.add('hidden');
+            if (wave) {
+              wave.classList.add('hidden');
+              wave.classList.remove('flex');
+            }
+            if (label) label.textContent = 'Dengarkan Berita';
+          }
+        });
+      }
+
+      // 4. View Tracking ping
       setTimeout(() => {
         fetch(`/api/v1/articles/${articleId}/view`, {
           method: 'POST',

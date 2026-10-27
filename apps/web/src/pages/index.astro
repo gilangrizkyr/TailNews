@@ -4,6 +4,8 @@ import BreakingTicker from '../components/BreakingTicker.astro';
 import HeroGrid from '../components/HeroGrid.astro';
 import ArticleCard from '../components/ArticleCard.astro';
 import Sidebar from '../components/Sidebar.astro';
+import CategoryHighlights from '../components/CategoryHighlights.astro';
+import MultimediaSection from '../components/MultimediaSection.astro';
 import { getHomepage } from '../lib/api';
 
 // SSR Fetching
@@ -90,4 +92,10 @@ const preloadImage = leadArticle?.cover_url;
       </div>
     </div>
   </div>
+
+  <!-- Category Highlights Section (Modular Channel Bento Grid) -->
+  <CategoryHighlights articles={latest} />
+
+  <!-- Multimedia & Visual Lens Strip (Dark Contrast Theme) -->
+  <MultimediaSection articles={headlines.length > 0 ? headlines : latest} />
 </Layout>

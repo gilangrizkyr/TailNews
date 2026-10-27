@@ -10,8 +10,36 @@ interface Props {
 const { trending = [], categories = [] } = Astro.props;
 ---
 
-<aside class="space-y-8">
-  <!-- Widget: Trending / Terpopuler -->
+<aside class="space-y-6">
+  <!-- Widget 1: Market & Weather Snapshot Bar -->
+  <div class="bg-gray-900 text-white p-4 rounded-sm shadow-sm border border-gray-800">
+    <div class="flex items-center justify-between text-[11px] font-mono border-b border-gray-800 pb-2 mb-3">
+      <span class="text-gray-400 font-sans font-bold uppercase tracking-wider text-[10px] flex items-center gap-1.5">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        Indikator Pasar &amp; Cuaca
+      </span>
+      <span class="text-gray-500 text-[10px]">Realtime</span>
+    </div>
+    <div class="grid grid-cols-3 gap-2 text-center divide-x divide-gray-800">
+      <div>
+        <span class="block text-[10px] text-gray-400 font-sans">IHSG</span>
+        <span class="text-xs font-bold text-emerald-400 font-mono">7.685,4</span>
+        <span class="block text-[9px] text-emerald-500 font-mono">+0.48%</span>
+      </div>
+      <div>
+        <span class="block text-[10px] text-gray-400 font-sans">USD/IDR</span>
+        <span class="text-xs font-bold text-gray-200 font-mono">15.620</span>
+        <span class="block text-[9px] text-red-400 font-mono">-0.15%</span>
+      </div>
+      <div>
+        <span class="block text-[10px] text-gray-400 font-sans">Jakarta</span>
+        <span class="text-xs font-bold text-amber-300 font-mono">29°C</span>
+        <span class="block text-[9px] text-gray-400 font-sans">Cerah Berawan</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Widget 2: Trending / Terpopuler -->
   <div class="bg-white p-5 rounded-sm border border-gray-100 shadow-sm">
     <div class="border-b-2 border-red-600 pb-2 mb-5 flex items-center justify-between">
       <h3 class="text-sm font-black uppercase tracking-wider text-gray-900">
@@ -52,7 +80,138 @@ const { trending = [], categories = [] } = Astro.props;
     </ul>
   </div>
 
-  <!-- Widget: Reserved Ad Slot (Zero CLS guarantee) -->
+  <!-- Widget 3: Interactive Jajak Pendapat / Polling Publik -->
+  <div class="bg-white p-5 rounded-sm border border-gray-100 shadow-sm" id="editorial-poll-widget">
+    <div class="border-b-2 border-black pb-2 mb-4 flex items-center justify-between">
+      <h3 class="text-sm font-black uppercase tracking-wider text-gray-900 flex items-center gap-1.5">
+        <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        Jajak Pendapat Publik
+      </h3>
+      <span class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Minggu Ini</span>
+    </div>
+
+    <p class="text-xs font-semibold text-gray-800 mb-4 leading-relaxed">
+      Apakah Anda setuju dengan akselerasi penuh armada bus listrik dan pembatasan kendaraan fosil di jalan protokol kota besar?
+    </p>
+
+    <!-- Vote Options Form -->
+    <div id="poll-options" class="space-y-2">
+      <button
+        type="button"
+        data-option="0"
+        class="poll-btn w-full text-left p-2.5 rounded-sm border border-gray-200 hover:border-red-600 hover:bg-red-50 text-xs font-medium text-gray-700 transition-all flex items-center justify-between group cursor-pointer"
+      >
+        <span>Sangat Setuju (Kurangi polusi &amp; emisi)</span>
+        <span class="w-4 h-4 rounded-full border border-gray-300 group-hover:border-red-600 group-hover:bg-red-600 flex items-center justify-center"></span>
+      </button>
+
+      <button
+        type="button"
+        data-option="1"
+        class="poll-btn w-full text-left p-2.5 rounded-sm border border-gray-200 hover:border-red-600 hover:bg-red-50 text-xs font-medium text-gray-700 transition-all flex items-center justify-between group cursor-pointer"
+      >
+        <span>Perlu Ditinjau (Kesiapan SPKLU belum merata)</span>
+        <span class="w-4 h-4 rounded-full border border-gray-300 group-hover:border-red-600 group-hover:bg-red-600 flex items-center justify-center"></span>
+      </button>
+
+      <button
+        type="button"
+        data-option="2"
+        class="poll-btn w-full text-left p-2.5 rounded-sm border border-gray-200 hover:border-red-600 hover:bg-red-50 text-xs font-medium text-gray-700 transition-all flex items-center justify-between group cursor-pointer"
+      >
+        <span>Netral / Menunggu Hasil Uji Coba</span>
+        <span class="w-4 h-4 rounded-full border border-gray-300 group-hover:border-red-600 group-hover:bg-red-600 flex items-center justify-center"></span>
+      </button>
+    </div>
+
+    <!-- Results Display (Initially hidden or shown if already voted) -->
+    <div id="poll-results" class="hidden space-y-3 pt-1">
+      <div>
+        <div class="flex justify-between text-xs font-medium text-gray-700 mb-1">
+          <span>Sangat Setuju</span>
+          <span class="font-bold text-red-600 font-mono">68%</span>
+        </div>
+        <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div class="h-full bg-red-600 rounded-full transition-all duration-700" style="width: 68%"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="flex justify-between text-xs font-medium text-gray-700 mb-1">
+          <span>Perlu Ditinjau</span>
+          <span class="font-bold text-gray-800 font-mono">24%</span>
+        </div>
+        <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div class="h-full bg-gray-800 rounded-full transition-all duration-700" style="width: 24%"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="flex justify-between text-xs font-medium text-gray-700 mb-1">
+          <span>Netral</span>
+          <span class="font-bold text-gray-500 font-mono">8%</span>
+        </div>
+        <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div class="h-full bg-gray-400 rounded-full transition-all duration-700" style="width: 8%"></div>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-400">
+        <span>Total: <strong>1.482</strong> suara masuk</span>
+        <span class="text-emerald-600 font-semibold flex items-center gap-1">
+          <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+          Suara Anda tercatat
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Widget 4: Newsletter Box (Tailnews Morning Digest) -->
+  <div class="bg-gradient-to-br from-red-600 to-rose-700 text-white p-5 rounded-sm shadow-sm relative overflow-hidden">
+    <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+
+    <div class="relative z-10">
+      <div class="flex items-center space-x-2 text-white/90 text-xs font-bold uppercase tracking-wider mb-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+        <span>Newsletter Redaksi</span>
+      </div>
+
+      <h4 class="text-base font-black leading-snug mb-1 text-white">
+        Kurasi 5 Berita Terpenting Pagi Ini
+      </h4>
+      <p class="text-xs text-white/80 leading-relaxed mb-4">
+        Dapatkan rangkuman eksklusif langsung ke inbox Anda setiap pagi pukul 06.00 WIB. Gratis, tanpa spam.
+      </p>
+
+      <form id="newsletter-form" class="space-y-2">
+        <div class="relative">
+          <input
+            type="email"
+            id="newsletter-email"
+            required
+            placeholder="Masukkan alamat email Anda..."
+            class="w-full py-2 px-3 text-xs bg-white text-gray-900 rounded-sm placeholder-gray-400 focus:outline-hidden focus:ring-2 focus:ring-white/80"
+          />
+        </div>
+        <button
+          type="submit"
+          class="w-full py-2 px-4 bg-black hover:bg-gray-900 text-white text-xs font-bold uppercase tracking-wider rounded-sm transition-colors cursor-pointer shadow-sm"
+        >
+          Langganan Sekarang &rarr;
+        </button>
+      </form>
+
+      <div id="newsletter-success" class="hidden mt-3 p-2.5 bg-black/40 border border-white/20 rounded-sm text-xs text-center text-white font-medium">
+        Terima kasih! Anda telah terdaftar dalam kurasi berita harian kami.
+      </div>
+    </div>
+  </div>
+
+  <!-- Widget 5: Reserved Ad Slot (Zero CLS guarantee) -->
   <div class="bg-gray-100 rounded-sm p-4 text-center border border-gray-200">
     <span class="text-[10px] uppercase font-semibold text-gray-400 tracking-wider block mb-2">Iklan</span>
     <div class="ad-slot-reserved h-64 flex flex-col items-center justify-center bg-gray-50 text-gray-400 text-xs rounded border border-dashed border-gray-300">
@@ -64,7 +223,7 @@ const { trending = [], categories = [] } = Astro.props;
     </div>
   </div>
 
-  <!-- Widget: Jelajah Kategori -->
+  <!-- Widget 6: Jelajah Kategori -->
   {categories.length > 0 && (
     <div class="bg-white p-5 rounded-sm border border-gray-100 shadow-sm">
       <div class="border-b-2 border-red-600 pb-2 mb-4">
@@ -85,3 +244,38 @@ const { trending = [], categories = [] } = Astro.props;
     </div>
   )}
 </aside>
+
+<!-- Client Script for Sidebar Widgets -->
+<script is:inline>
+  document.addEventListener('DOMContentLoaded', () => {
+    // 1. Polling Logic
+    const pollKey = 'newsportal_poll_voted';
+    const pollOptions = document.getElementById('poll-options');
+    const pollResults = document.getElementById('poll-results');
+
+    if (localStorage.getItem(pollKey)) {
+      if (pollOptions) pollOptions.classList.add('hidden');
+      if (pollResults) pollResults.classList.remove('hidden');
+    }
+
+    const buttons = document.querySelectorAll('.poll-btn');
+    buttons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        localStorage.setItem(pollKey, 'true');
+        if (pollOptions) pollOptions.classList.add('hidden');
+        if (pollResults) pollResults.classList.remove('hidden');
+      });
+    });
+
+    // 2. Newsletter Submit Logic
+    const form = document.getElementById('newsletter-form');
+    const success = document.getElementById('newsletter-success');
+    if (form) {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        form.classList.add('hidden');
+        if (success) success.classList.remove('hidden');
+      });
+    }
+  });
+</script>

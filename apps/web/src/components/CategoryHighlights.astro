@@ -1,0 +1,220 @@
+---
+import type { Article } from '../lib/api';
+import { formatDate } from '../lib/api';
+
+interface Props {
+  articles?: Article[];
+}
+
+const { articles = [] } = Astro.props;
+
+// Group or select articles for two thematic channels:
+// Channel A: Inovasi Teknologi & Ekonomi
+const techEconomyArticles = articles.filter((a) =>
+  ['teknologi', 'ekonomi'].includes(a.category_slug || '')
+);
+const channelA = techEconomyArticles.length >= 3
+  ? techEconomyArticles.slice(0, 3)
+  : articles.slice(0, 3);
+
+// Channel B: Otomotif, Olahraga & Publik
+const autoSportArticles = articles.filter((a) =>
+  ['otomotif', 'olahraga', 'politik'].includes(a.category_slug || '')
+);
+const channelB = autoSportArticles.length >= 3
+  ? autoSportArticles.slice(0, 3)
+  : articles.slice(3, 6);
+---
+
+<section class="py-10 bg-white border-b border-gray-200">
+  <div class="xl:container mx-auto px-3 sm:px-4 xl:px-2">
+    <!-- Outer Grid: 2 Thematic Channels Side by Side -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Channel 1: Teknologi & Bisnis -->
+      <div class="flex flex-col">
+        <!-- Channel Header -->
+        <div class="border-b-2 border-blue-600 pb-2.5 mb-5 flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="w-2.5 h-4 bg-blue-600 inline-block"></span>
+            <h3 class="text-base font-black uppercase tracking-wider text-gray-950">
+              Teknologi &amp; Bisnis Digital
+            </h3>
+          </div>
+          <a
+            href="/category/teknologi"
+            class="text-xs font-bold text-blue-600 hover:text-blue-700 uppercase tracking-wider flex items-center gap-1 transition-colors"
+          >
+            Lihat Semua &rarr;
+          </a>
+        </div>
+
+        {channelA.length > 0 && (
+          <div class="space-y-4 flex-1 flex flex-col">
+            <!-- Lead Card -->
+            <article class="group bg-gray-50 rounded-sm overflow-hidden border border-gray-100 hover:border-gray-200 transition-all duration-200 shadow-xs">
+              <div class="aspect-video w-full overflow-hidden bg-gray-200 relative">
+                <a href={`/${channelA[0].slug}`} class="block w-full h-full">
+                  <img
+                    src={channelA[0].cover_url || '/img/bg.jpg'}
+                    alt={channelA[0].title}
+                    width="600"
+                    height="338"
+                    class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                </a>
+                <div class="absolute bottom-2 left-2">
+                  <span class="px-2 py-0.5 bg-blue-600 text-white text-[10px] font-black uppercase tracking-wider rounded-sm shadow-xs">
+                    {channelA[0].category_name}
+                  </span>
+                </div>
+              </div>
+
+              <div class="p-4">
+                <h4 class="text-base sm:text-lg font-bold text-gray-900 group-hover:text-blue-600 line-clamp-2 leading-snug mb-2 transition-colors">
+                  <a href={`/${channelA[0].slug}`}>
+                    {channelA[0].title}
+                  </a>
+                </h4>
+                <p class="text-xs sm:text-sm text-gray-500 line-clamp-2 leading-relaxed mb-3">
+                  {channelA[0].excerpt}
+                </p>
+                <div class="flex items-center text-[11px] text-gray-400 gap-2">
+                  <span>{channelA[0].author_name || 'Redaksi'}</span>
+                  <span>&bull;</span>
+                  <span>{formatDate(channelA[0].published_at)}</span>
+                </div>
+              </div>
+            </article>
+
+            <!-- Sub Items (Compact Horizontal) -->
+            <div class="divide-y divide-gray-100 bg-white border border-gray-100 rounded-sm p-3">
+              {channelA.slice(1).map((art) => (
+                <article class="group flex items-center gap-3 py-3 first:pt-1 last:pb-1">
+                  <div class="w-20 h-14 flex-shrink-0 rounded-xs overflow-hidden bg-gray-100 relative">
+                    <a href={`/${art.slug}`} class="block w-full h-full">
+                      <img
+                        src={art.cover_url || '/img/bg.jpg'}
+                        alt={art.title}
+                        width="80"
+                        height="56"
+                        class="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        loading="lazy"
+                      />
+                    </a>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <span class="text-[10px] font-bold text-blue-600 uppercase tracking-wider block mb-0.5">
+                      {art.category_name}
+                    </span>
+                    <h5 class="text-xs sm:text-sm font-semibold text-gray-800 group-hover:text-blue-600 line-clamp-2 leading-snug transition-colors">
+                      <a href={`/${art.slug}`}>
+                        {art.title}
+                      </a>
+                    </h5>
+                    <span class="text-[10px] text-gray-400 mt-1 block">
+                      {formatDate(art.published_at)}
+                    </span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <!-- Channel 2: Otomotif & Mobilitas Hijau -->
+      <div class="flex flex-col">
+        <!-- Channel Header -->
+        <div class="border-b-2 border-emerald-600 pb-2.5 mb-5 flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="w-2.5 h-4 bg-emerald-600 inline-block"></span>
+            <h3 class="text-base font-black uppercase tracking-wider text-gray-950">
+              Otomotif &amp; Mobilitas Masa Depan
+            </h3>
+          </div>
+          <a
+            href="/category/otomotif"
+            class="text-xs font-bold text-emerald-600 hover:text-emerald-700 uppercase tracking-wider flex items-center gap-1 transition-colors"
+          >
+            Lihat Semua &rarr;
+          </a>
+        </div>
+
+        {channelB.length > 0 && (
+          <div class="space-y-4 flex-1 flex flex-col">
+            <!-- Lead Card -->
+            <article class="group bg-gray-50 rounded-sm overflow-hidden border border-gray-100 hover:border-gray-200 transition-all duration-200 shadow-xs">
+              <div class="aspect-video w-full overflow-hidden bg-gray-200 relative">
+                <a href={`/${channelB[0].slug}`} class="block w-full h-full">
+                  <img
+                    src={channelB[0].cover_url || '/img/bg.jpg'}
+                    alt={channelB[0].title}
+                    width="600"
+                    height="338"
+                    class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                </a>
+                <div class="absolute bottom-2 left-2">
+                  <span class="px-2 py-0.5 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider rounded-sm shadow-xs">
+                    {channelB[0].category_name}
+                  </span>
+                </div>
+              </div>
+
+              <div class="p-4">
+                <h4 class="text-base sm:text-lg font-bold text-gray-900 group-hover:text-emerald-600 line-clamp-2 leading-snug mb-2 transition-colors">
+                  <a href={`/${channelB[0].slug}`}>
+                    {channelB[0].title}
+                  </a>
+                </h4>
+                <p class="text-xs sm:text-sm text-gray-500 line-clamp-2 leading-relaxed mb-3">
+                  {channelB[0].excerpt}
+                </p>
+                <div class="flex items-center text-[11px] text-gray-400 gap-2">
+                  <span>{channelB[0].author_name || 'Redaksi'}</span>
+                  <span>&bull;</span>
+                  <span>{formatDate(channelB[0].published_at)}</span>
+                </div>
+              </div>
+            </article>
+
+            <!-- Sub Items (Compact Horizontal) -->
+            <div class="divide-y divide-gray-100 bg-white border border-gray-100 rounded-sm p-3">
+              {channelB.slice(1).map((art) => (
+                <article class="group flex items-center gap-3 py-3 first:pt-1 last:pb-1">
+                  <div class="w-20 h-14 flex-shrink-0 rounded-xs overflow-hidden bg-gray-100 relative">
+                    <a href={`/${art.slug}`} class="block w-full h-full">
+                      <img
+                        src={art.cover_url || '/img/bg.jpg'}
+                        alt={art.title}
+                        width="80"
+                        height="56"
+                        class="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        loading="lazy"
+                      />
+                    </a>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block mb-0.5">
+                      {art.category_name}
+                    </span>
+                    <h5 class="text-xs sm:text-sm font-semibold text-gray-800 group-hover:text-emerald-600 line-clamp-2 leading-snug transition-colors">
+                      <a href={`/${art.slug}`}>
+                        {art.title}
+                      </a>
+                    </h5>
+                    <span class="text-[10px] text-gray-400 mt-1 block">
+                      {formatDate(art.published_at)}
+                    </span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</section>
