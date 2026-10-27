@@ -12,6 +12,32 @@ DB_PORT ?= 3306
 DB_NAME ?= news_portal
 DB_DSN ?= "$(DB_USER):$(DB_PASS)@tcp($(DB_HOST):$(DB_PORT))/$(DB_NAME)?parseTime=true"
 
+dev-infra:
+	@echo "==> Starting local MySQL & Redis containers..."
+	@docker start mysql-dev 2>/dev/null || true
+	@docker start redis-dev 2>/dev/null || true
+	@echo "==> MySQL & Redis containers ready."
+
+clean-data:
+	@echo "==> Cleaning all dummy articles, views, revisions, tags, redirects, and media..."
+	@mysql -u $(DB_USER) -p$(DB_PASS) -h $(DB_HOST) $(DB_NAME) -e "\
+		SET FOREIGN_KEY_CHECKS = 0; \
+		TRUNCATE TABLE article_revisions; \
+		TRUNCATE TABLE article_tag; \
+		TRUNCATE TABLE article_views_daily; \
+		TRUNCATE TABLE articles; \
+		TRUNCATE TABLE tags; \
+		TRUNCATE TABLE redirects; \
+		TRUNCATE TABLE audit_logs; \
+		TRUNCATE TABLE media; \
+		DELETE FROM categories WHERE id > 6; \
+		DELETE FROM authors WHERE id > 3; \
+		DELETE FROM pages WHERE id > 4; \
+		DELETE FROM users WHERE id > 3; \
+		SET FOREIGN_KEY_CHECKS = 1;"
+	@docker exec redis-dev redis-cli FLUSHALL 2>/dev/null || true
+	@echo "==> Database and Redis cache are now clean like brand new."
+
 dev:
 	@echo "==> Starting local infrastructure & services..."
 	@docker start mysql-dev 2>/dev/null || true
