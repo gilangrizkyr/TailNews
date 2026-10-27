@@ -167,6 +167,13 @@ func main() {
 	}
 
 	// 7. Seed >= 1,000 Articles in Batches
+	var existingArticlesCount int
+	_ = db.QueryRow("SELECT COUNT(*) FROM articles").Scan(&existingArticlesCount)
+	if existingArticlesCount >= 1000 {
+		log.Printf("==> Database already seeded with %d articles. Skipping duplicate insert to preserve data integrity.\n", existingArticlesCount)
+		return
+	}
+
 	log.Println("==> Seeding >= 1,000 realistic articles in batches...")
 
 	titleTemplates := []string{
