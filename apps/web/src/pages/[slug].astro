@@ -160,8 +160,8 @@ const currentUrl = Astro.url.href;
 
           <!-- Accessibility & Audio Reader Toolbar -->
           <div class="flex flex-wrap items-center justify-between bg-gray-50 border border-gray-200/80 px-4 py-2.5 rounded-sm mb-6 gap-3">
-            <!-- Simulated Audio Reader -->
-            <div class="flex items-center gap-2.5">
+            <!-- Real Web Speech TTS Audio Reader -->
+            <div class="flex items-center gap-2">
               <button
                 id="btn-play-audio"
                 type="button"
@@ -175,12 +175,24 @@ const currentUrl = Astro.url.href;
                 </svg>
                 <span id="audio-label">Dengarkan Berita</span>
               </button>
+
+              <button
+                id="btn-stop-audio"
+                type="button"
+                title="Hentikan audio"
+                class="hidden p-1.5 text-gray-500 hover:text-red-600 hover:bg-gray-200 rounded-sm transition-colors cursor-pointer"
+              >
+                <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                  <rect x="6" y="6" width="12" height="12" />
+                </svg>
+              </button>
+
               <div id="audio-wave" class="hidden items-center gap-1">
                 <span class="w-1 h-3 bg-red-600 animate-pulse"></span>
                 <span class="w-1 h-5 bg-red-600 animate-pulse delay-75"></span>
                 <span class="w-1 h-2 bg-red-600 animate-pulse delay-150"></span>
                 <span class="w-1 h-4 bg-red-600 animate-pulse delay-100"></span>
-                <span class="text-[11px] text-gray-500 font-mono ml-1">01:45</span>
+                <span id="audio-timer" class="text-[11px] text-gray-700 font-mono font-semibold ml-1">00:00</span>
               </div>
             </div>
 
@@ -190,21 +202,24 @@ const currentUrl = Astro.url.href;
               <button
                 id="font-sm"
                 type="button"
-                class="px-2 py-1 bg-white border border-gray-200 hover:border-black rounded-xs font-bold text-[11px] cursor-pointer"
+                title="Huruf Kecil (14px)"
+                class="px-2.5 py-1 bg-white border border-gray-200 hover:border-black rounded-xs font-bold text-[11px] cursor-pointer transition-colors"
               >
                 A-
               </button>
               <button
                 id="font-md"
                 type="button"
-                class="px-2 py-1 bg-black text-white border border-black rounded-xs font-bold text-xs cursor-pointer"
+                title="Huruf Standar (17px)"
+                class="px-2.5 py-1 bg-black text-white border border-black rounded-xs font-bold text-xs cursor-pointer transition-colors"
               >
                 A
               </button>
               <button
                 id="font-lg"
                 type="button"
-                class="px-2 py-1 bg-white border border-gray-200 hover:border-black rounded-xs font-bold text-sm cursor-pointer"
+                title="Huruf Besar (21px)"
+                class="px-2.5 py-1 bg-white border border-gray-200 hover:border-black rounded-xs font-bold text-sm cursor-pointer transition-colors"
               >
                 A+
               </button>
@@ -337,30 +352,35 @@ const currentUrl = Astro.url.href;
     </div>
   </div>
 
-  <!-- Interactive Scripts: Reading Progress Bar, Font Sizer, Audio Simulation, View Tracking -->
-  <script is:inline define:vars={{ articleId: article.id }}>
+  <!-- Interactive Scripts: Reading Progress Bar, Font Sizer, Real Audio TTS, View Tracking -->
+  <script is:inline define:vars={{ articleId: article.id, articleTitle: article.title, articleExcerpt: article.excerpt || '' }}>
     document.addEventListener('DOMContentLoaded', () => {
       // 1. Reading Progress Bar
       const progressBar = document.getElementById('reading-progress-bar');
-      window.addEventListener('scroll', () => {
+      const updateProgress = () => {
         const docElem = document.documentElement;
         const totalHeight = docElem.scrollHeight - docElem.clientHeight;
         if (totalHeight > 0 && progressBar) {
           const scrollPercent = (window.scrollY / totalHeight) * 100;
           progressBar.style.width = Math.min(scrollPercent, 100) + '%';
         }
-      });
+      };
+      window.addEventListener('scroll', updateProgress, { passive: true });
 
-      // 2. Font Sizer
+      // 2. Direct-Style Font Sizer (Resizes every paragraph visibly)
       const content = document.getElementById('article-content-body');
       const btnSm = document.getElementById('font-sm');
       const btnMd = document.getElementById('font-md');
       const btnLg = document.getElementById('font-lg');
 
-      const setFont = (sizeClass, activeBtn) => {
+      const applyFontSize = (sizePx, linePx, activeBtn) => {
         if (!content) return;
-        content.classList.remove('text-sm', 'text-base', 'text-lg', 'text-xl');
-        content.classList.add(sizeClass);
+        content.style.fontSize = `${sizePx}px`;
+        content.style.lineHeight = `${linePx}px`;
+        content.querySelectorAll('p, li, blockquote, span').forEach((el) => {
+          el.style.fontSize = `${sizePx}px`;
+          el.style.lineHeight = `${linePx}px`;
+        });
 
         [btnSm, btnMd, btnLg].forEach((b) => {
           if (b) {
@@ -372,44 +392,158 @@ const currentUrl = Astro.url.href;
           activeBtn.classList.remove('bg-white', 'text-gray-600', 'border-gray-200');
           activeBtn.classList.add('bg-black', 'text-white', 'border-black');
         }
+        localStorage.setItem('newsportal_font_size', String(sizePx));
       };
 
-      if (btnSm) btnSm.addEventListener('click', () => setFont('text-sm', btnSm));
-      if (btnMd) btnMd.addEventListener('click', () => setFont('text-base', btnMd));
-      if (btnLg) btnLg.addEventListener('click', () => setFont('text-lg', btnLg));
+      if (btnSm) btnSm.addEventListener('click', () => applyFontSize(14, 24, btnSm));
+      if (btnMd) btnMd.addEventListener('click', () => applyFontSize(17, 30, btnMd));
+      if (btnLg) btnLg.addEventListener('click', () => applyFontSize(21, 38, btnLg));
 
-      // 3. Audio Reader Simulation
+      // Restore saved font size if user previously set it
+      const savedSize = localStorage.getItem('newsportal_font_size');
+      if (savedSize === '14') applyFontSize(14, 24, btnSm);
+      else if (savedSize === '21') applyFontSize(21, 38, btnLg);
+
+      // 3. Real Text-To-Speech (TTS) Narration with Web Speech API
       const btnAudio = document.getElementById('btn-play-audio');
+      const btnStop = document.getElementById('btn-stop-audio');
       const iconPlay = document.getElementById('icon-play');
       const iconPause = document.getElementById('icon-pause');
       const wave = document.getElementById('audio-wave');
       const label = document.getElementById('audio-label');
+      const timer = document.getElementById('audio-timer');
+
+      const hasTTS = 'speechSynthesis' in window;
       let isPlaying = false;
+      let isPaused = false;
+      let timerInterval = null;
+      let remainingSeconds = 0;
+
+      const formatTime = (secs) => {
+        const m = Math.floor(secs / 60);
+        const s = secs % 60;
+        return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      };
+
+      const stopAudio = () => {
+        if (hasTTS) {
+          window.speechSynthesis.cancel();
+        }
+        isPlaying = false;
+        isPaused = false;
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = null;
+
+        if (iconPlay) iconPlay.classList.remove('hidden');
+        if (iconPause) iconPause.classList.add('hidden');
+        if (btnStop) btnStop.classList.add('hidden');
+        if (wave) {
+          wave.classList.add('hidden');
+          wave.classList.remove('flex');
+        }
+        if (label) label.textContent = 'Dengarkan Berita';
+      };
+
+      if (btnStop) {
+        btnStop.addEventListener('click', stopAudio);
+      }
 
       if (btnAudio) {
         btnAudio.addEventListener('click', () => {
-          isPlaying = !isPlaying;
-          if (isPlaying) {
-            if (iconPlay) iconPlay.classList.add('hidden');
-            if (iconPause) iconPause.classList.remove('hidden');
-            if (wave) {
-              wave.classList.remove('hidden');
-              wave.classList.add('flex');
-            }
-            if (label) label.textContent = 'Jeda Audio';
-          } else {
+          if (!hasTTS) {
+            alert('Browser Anda belum mendukung Web Speech API audio narasi.');
+            return;
+          }
+
+          // Case 1: Currently Playing -> Pause
+          if (isPlaying && !isPaused) {
+            window.speechSynthesis.pause();
+            isPaused = true;
+            if (timerInterval) clearInterval(timerInterval);
             if (iconPlay) iconPlay.classList.remove('hidden');
             if (iconPause) iconPause.classList.add('hidden');
-            if (wave) {
-              wave.classList.add('hidden');
-              wave.classList.remove('flex');
-            }
-            if (label) label.textContent = 'Dengarkan Berita';
+            if (label) label.textContent = 'Lanjutkan Audio';
+            if (wave) wave.classList.add('opacity-50');
+            return;
           }
+
+          // Case 2: Paused -> Resume
+          if (isPlaying && isPaused) {
+            window.speechSynthesis.resume();
+            isPaused = false;
+            if (iconPlay) iconPlay.classList.add('hidden');
+            if (iconPause) iconPause.classList.remove('hidden');
+            if (label) label.textContent = 'Jeda Audio';
+            if (wave) wave.classList.remove('opacity-50');
+
+            timerInterval = setInterval(() => {
+              if (remainingSeconds > 0) {
+                remainingSeconds--;
+                if (timer) timer.textContent = formatTime(remainingSeconds);
+              } else {
+                stopAudio();
+              }
+            }, 1000);
+            return;
+          }
+
+          // Case 3: Start New Narration
+          window.speechSynthesis.cancel();
+          const bodyText = content ? content.innerText : '';
+          const fullText = `${articleTitle}. ${articleExcerpt}. ${bodyText}`.replace(/\s+/g, ' ').trim();
+
+          const utterance = new SpeechSynthesisUtterance(fullText);
+          utterance.lang = 'id-ID';
+          utterance.rate = 1.0;
+
+          // Find Indonesian voice if present
+          const voices = window.speechSynthesis.getVoices();
+          const idVoice = voices.find((v) => v.lang.startsWith('id') || v.lang.startsWith('in'));
+          if (idVoice) utterance.voice = idVoice;
+
+          // Estimated narration length based on ~130 words per minute (2.16 words/sec)
+          const wordsCount = fullText.split(' ').length;
+          remainingSeconds = Math.max(Math.round(wordsCount / 2.5), 15);
+          if (timer) timer.textContent = formatTime(remainingSeconds);
+
+          utterance.onend = () => {
+            stopAudio();
+          };
+
+          utterance.onerror = () => {
+            stopAudio();
+          };
+
+          window.speechSynthesis.speak(utterance);
+          isPlaying = true;
+          isPaused = false;
+
+          if (iconPlay) iconPlay.classList.add('hidden');
+          if (iconPause) iconPause.classList.remove('hidden');
+          if (btnStop) btnStop.classList.remove('hidden');
+          if (wave) {
+            wave.classList.remove('hidden', 'opacity-50');
+            wave.classList.add('flex');
+          }
+          if (label) label.textContent = 'Jeda Audio';
+
+          timerInterval = setInterval(() => {
+            if (remainingSeconds > 0) {
+              remainingSeconds--;
+              if (timer) timer.textContent = formatTime(remainingSeconds);
+            } else {
+              stopAudio();
+            }
+          }, 1000);
         });
       }
 
-      // 4. View Tracking ping
+      // Cleanup on page navigation
+      window.addEventListener('beforeunload', () => {
+        if (hasTTS) window.speechSynthesis.cancel();
+      });
+
+      // 4. View Tracking ping (proxied cleanly by Astro to port 8080)
       setTimeout(() => {
         fetch(`/api/v1/articles/${articleId}/view`, {
           method: 'POST',
