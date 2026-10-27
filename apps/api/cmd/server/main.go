@@ -123,6 +123,15 @@ func main() {
 			logger.Error("graceful shutdown failed; forcing close", slog.String("error", err.Error()))
 			_ = server.Close()
 		}
+
+		// Flush any remaining buffered views to MySQL
+		flushed, flushErr := viewCounter.Flush(shutdownCtx)
+		if flushErr != nil {
+			logger.Error("error flushing buffered views on shutdown", slog.String("error", flushErr.Error()))
+		} else {
+			logger.Info("flushed buffered views on shutdown", slog.Int("articles_flushed", flushed))
+		}
+
 		logger.Info("server gracefully stopped")
 	}
 }

@@ -99,7 +99,7 @@ services:
     networks:
       - news-network
     ports:
-      - "5173:5173"
+      - "5173:80"
 
   nginx:
     image: nginx:alpine
