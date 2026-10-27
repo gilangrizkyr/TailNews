@@ -1,81 +1,101 @@
-# Enterprise News Portal (Portal Berita Modern)
+# TailNews
 
-> Portal berita modern berkecepatan tinggi, dinamis, dan scalable (setara CNN / Detik) dengan arsitektur **Go 1.23+**, **MySQL 8 / MariaDB 11**, **Redis 7**, **Astro SSR** (Frontend Publik), dan **React + shadcn/ui** (Panel Admin).
+TailNews adalah monorepo portal berita yang berisi API, situs publik, dan panel administrasi. Situs publik menggunakan Astro SSR, API menggunakan Go, dan panel administrasi dibangun dengan React.
 
----
+## Komponen
 
-## 🚀 Prinsip Utama: 100% Konten Dinamis
+| Aplikasi | Teknologi | Direktori |
+| --- | --- | --- |
+| API | Go, MySQL/MariaDB, Redis | `apps/api` |
+| Situs publik | Astro SSR | `apps/web` |
+| Panel administrasi | React, Vite, TanStack Router | `apps/admin` |
 
-- **Astro SSR Penuh (`output: 'server'`)**: Tidak ada Static Site Generation (SSG) untuk berita. Semua konten diambil saat request dari API Go via jaringan internal.
-- **Tanpa Rebuild & Tanpa Deploy**: Artikel baru, edit, dan unpublish tampil di homepage, kategori, sitemap, dan RSS dalam **≤ 5 detik**.
-- **Multi-tier Caching**: L1 Cloudflare CDN, L2 Redis dengan `singleflight` (anti cache stampede), L3 in-process memory.
-- **Realtime Trending & View Counter**: Deduplikasi kunjungan per IP+UA, Redis atomic counter & ZSET windowing, flush berkala ke MySQL.
+Konfigurasi deployment Docker Compose dan Nginx tersedia di `deploy/`. Dokumentasi arsitektur dan spesifikasi API berada di `docs/`.
 
----
+## Persyaratan
 
-## 📁 Struktur Monorepo
+- Docker dan Docker Compose untuk menjalankan seluruh stack.
+- Untuk pengembangan tanpa container aplikasi: Go sesuai versi pada `apps/api/go.mod`, serta Node.js 20 atau lebih baru.
+- MySQL atau MariaDB dan Redis jika menjalankan API secara lokal.
 
-```
-news-portal/
-├── apps/
-│   ├── api/          # Go 1.23+ Clean Architecture Backend
-│   ├── web/          # Astro SSR Frontend Publik (Template Tailnews)
-│   └── admin/        # React 19 + Vite + TanStack Router (shadcn-admin)
-├── deploy/           # Docker Compose, Nginx Reverse Proxy, .env examples
-├── tests/            # E2E Playwright & Load Test k6
-├── docs/             # architecture.md, openapi.yaml, caching.md, runbook.md
-├── Makefile          # Automation commands
-└── README.md
-```
+## Menjalankan dengan Docker Compose
 
----
-
-## 🛠️ Prasyarat (Prerequisites)
-
-- **Go 1.23+**
-- **Node.js v20+**
-- **MySQL 8** atau **MariaDB 11.8+** (port 3306)
-- **Redis 7** (port 6379)
-- **Docker & Docker Compose**
-
----
-
-## ⚡ Memulai Cepat (Quick Start)
-
-### 1. Menjalankan Lokal
+Perintah berikut membangun dan menjalankan API, situs publik, panel admin, MariaDB, Redis, dan Nginx:
 
 ```bash
-# 1. Pastikan dependensi Go & env terkonfigurasi
+make docker-up
+```
+
+Alamat layanan:
+
+- Situs publik: <http://localhost:4321>
+- Panel administrasi: <http://localhost:5173>
+- API health check: <http://localhost:8080/healthz>
+- Nginx: <http://localhost>
+
+Skema database perlu dimigrasikan sebelum menggunakan fitur yang bergantung pada data. Migrasi menggunakan Goose dan target Makefile berikut:
+
+```bash
+go install github.com/pressly/goose/v3/cmd/goose@latest
+make migrate-up
+```
+
+Untuk menghentikan stack:
+
+```bash
+make docker-down
+```
+
+## Pengembangan Lokal
+
+Jalankan MariaDB dan Redis terlebih dahulu. Salin konfigurasi contoh, lalu sesuaikan DSN database dan secret JWT pada `apps/api/.env`:
+
+```bash
 cp apps/api/.env.example apps/api/.env
-
-# 2. Jalankan seluruh layanan via Makefile
-make dev
 ```
 
-Endpoint yang tersedia:
-- **API Health Check**: `http://localhost:8080/healthz`
-- **API Readiness Check**: `http://localhost:8080/readyz`
-- **API Namespace**: `http://localhost:8080/api/v1/ping`
-
-### 2. Pengujian & Linting
+Setelah database tersedia dan Goose terpasang, terapkan migrasi:
 
 ```bash
-# Menjalankan unit & integration tests backend
+make migrate-up
+```
+
+Jalankan setiap perintah berikut di terminal terpisah:
+
+```bash
+make dev-api
+make dev-web
+make dev-admin
+```
+
+API, situs publik, dan panel admin menggunakan port `8080`, `4321`, dan `5173` secara default.
+
+## Pengujian dan Build
+
+Perintah berikut menjalankan pengujian backend, pemeriksaan statis Go, dan membangun binary API:
+
+```bash
 make test
-
-# Menjalankan linter & static analysis
 make lint
-
-# Kompilasi binary produksi
 make build
 ```
 
----
+Build situs publik dan panel admin dapat dijalankan dari direktori masing-masing dengan `npm run build`.
 
-## 📖 Dokumentasi Lengkap
+## Struktur Repository
 
-- [Spesifikasi Arsitektur](docs/architecture.md)
-- [OpenAPI 3.0 Specification](docs/openapi.yaml) *(Fase 2)*
-- [Strategi Caching & Cloudflare Rules](docs/caching.md) *(Fase 3)*
-- [Baseline Performa & k6 Benchmark](docs/performance.md) *(Fase 3)*
-- [Runbook Operasional](docs/runbook.md) *(Fase 6)*
+```text
+apps/
+	admin/       Panel administrasi
+	api/         Backend dan migrasi database
+	web/         Situs publik
+deploy/        Docker Compose, Nginx, dan contoh konfigurasi
+docs/          Dokumentasi proyek
+tests/         Pengujian dan benchmark
+```
+
+## Dokumentasi
+
+- [Arsitektur](docs/architecture.md)
+- [Spesifikasi API](docs/openapi.yaml)
+- [Aturan Cloudflare](docs/cloudflare-rules.md)
