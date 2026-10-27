@@ -1123,6 +1123,13 @@ func (r *articleRepo) ListAdmin(ctx context.Context, limit int32, offset int32) 
 	return items, nil
 }
 
+func (r *articleRepo) CountAdmin(ctx context.Context) (int64, error) {
+	var count int64
+	query := "SELECT COUNT(*) FROM articles WHERE deleted_at IS NULL"
+	err := r.db.QueryRowContext(ctx, query).Scan(&count)
+	return count, err
+}
+
 func mapArticleRow(row *Articles) *article.Article {
 	var coverID *uint64
 	if row.CoverMediaID.Valid {

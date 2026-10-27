@@ -133,7 +133,7 @@ export function RedirectsFeature() {
                     </Badge>
                   </td>
                   <td className='p-3 text-right font-medium text-muted-foreground'>
-                    {r.hit_count.toLocaleString()}
+                    {(r.hit_count ?? 0).toLocaleString()}
                   </td>
                   <td className='p-3 text-muted-foreground font-sans'>
                     {new Date(r.created_at).toLocaleDateString()}

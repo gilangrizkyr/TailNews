@@ -65,9 +65,9 @@ export function ArticlesFeature() {
       if (search.trim()) params.search = search.trim()
 
       const res = await articleApi.list(params)
-      setArticles(res.data)
-      setTotalPages(res.meta.total_pages)
-      setTotalCount(res.meta.total)
+      setArticles(res.data || [])
+      setTotalPages(res.meta?.total_pages ?? 1)
+      setTotalCount(res.meta?.total ?? 0)
     } catch {
       toast.error('Failed to load articles list')
     } finally {
@@ -148,7 +148,7 @@ export function ArticlesFeature() {
         <div>
           <h1 className='text-2xl font-bold tracking-tight'>Articles Management</h1>
           <p className='text-sm text-muted-foreground'>
-            Total {totalCount.toLocaleString()} articles across all categories and workflows.
+            Total {(totalCount ?? 0).toLocaleString()} articles across all categories and workflows.
           </p>
         </div>
         <Button onClick={() => navigate({ to: '/articles/new' })}>
@@ -290,7 +290,7 @@ export function ArticlesFeature() {
                     <td className='p-3 text-right font-mono font-medium'>
                       <span className='inline-flex items-center gap-1 text-muted-foreground'>
                         <TrendingUp className='h-3 w-3 text-emerald-500' />
-                        {art.view_count.toLocaleString()}
+                        {(art.view_count ?? 0).toLocaleString()}
                       </span>
                     </td>
 

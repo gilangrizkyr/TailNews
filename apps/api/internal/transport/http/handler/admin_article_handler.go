@@ -195,6 +195,9 @@ func (h *AdminArticleHandler) PreviewToken(w http.ResponseWriter, r *http.Reques
 func (h *AdminArticleHandler) List(w http.ResponseWriter, r *http.Request) {
 	pageStr := r.URL.Query().Get("page")
 	limitStr := r.URL.Query().Get("limit")
+	if limitStr == "" {
+		limitStr = r.URL.Query().Get("page_size")
+	}
 
 	page := int32(1)
 	if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
@@ -206,15 +209,23 @@ func (h *AdminArticleHandler) List(w http.ResponseWriter, r *http.Request) {
 		limit = int32(l)
 	}
 
-	articles, err := h.articleUsecase.List(r.Context(), page, limit)
+	articles, total, err := h.articleUsecase.List(r.Context(), page, limit)
 	if err != nil {
 		response.Error(w, http.StatusInternalServerError, "FETCH_ARTICLES_FAILED", err.Error(), nil)
 		return
 	}
 
+	totalPages := int32(1)
+	if total > 0 {
+		totalPages = int32((total + int64(limit) - 1) / int64(limit))
+	}
+
 	response.Success(w, http.StatusOK, articles, map[string]interface{}{
-		"page":  page,
-		"limit": limit,
+		"page":        page,
+		"page_size":   limit,
+		"limit":       limit,
+		"total":       total,
+		"total_pages": totalPages,
 	})
 }
 

@@ -109,7 +109,7 @@ export function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className='text-2xl font-bold'>
-                    {stats?.total_articles.toLocaleString() || 0}
+                    {(stats?.total_articles ?? 0).toLocaleString()}
                   </div>
                   <p className='text-xs text-muted-foreground mt-1'>
                     Across {stats?.total_categories || 0} news categories
@@ -126,7 +126,7 @@ export function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className='text-2xl font-bold text-emerald-600 dark:text-emerald-400'>
-                    {stats?.published_articles.toLocaleString() || 0}
+                    {(stats?.published_articles ?? 0).toLocaleString()}
                   </div>
                   <p className='text-xs text-muted-foreground mt-1'>
                     Live on Astro SSR reader portal
@@ -161,7 +161,7 @@ export function Dashboard() {
                 <CardContent>
                   <div className='text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1.5'>
                     <TrendingUp className='h-5 w-5' />
-                    {stats?.total_views.toLocaleString() || 0}
+                    {(stats?.total_views ?? 0).toLocaleString()}
                   </div>
                   <p className='text-xs text-muted-foreground mt-1'>
                     Aggregated reader page views

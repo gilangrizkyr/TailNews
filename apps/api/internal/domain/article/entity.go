@@ -115,4 +115,5 @@ type Repository interface {
 
 	// Admin
 	ListAdmin(ctx context.Context, limit int32, offset int32) ([]*Article, error)
+	CountAdmin(ctx context.Context) (int64, error)
 }

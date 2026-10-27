@@ -389,7 +389,7 @@ func (u *ArticleAdminUsecase) ListRevisions(ctx context.Context, articleID uint6
 	return res, nil
 }
 
-func (u *ArticleAdminUsecase) List(ctx context.Context, page int32, limit int32) ([]*dto.ArticleResponse, error) {
+func (u *ArticleAdminUsecase) List(ctx context.Context, page int32, limit int32) ([]*dto.ArticleResponse, int64, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -398,9 +398,14 @@ func (u *ArticleAdminUsecase) List(ctx context.Context, page int32, limit int32)
 	}
 	offset := (page - 1) * limit
 
+	total, err := u.articleRepo.CountAdmin(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
 	articles, err := u.articleRepo.ListAdmin(ctx, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	res := make([]*dto.ArticleResponse, len(articles))
@@ -450,6 +455,6 @@ func (u *ArticleAdminUsecase) List(ctx context.Context, page int32, limit int32)
 			UpdatedAt:      art.UpdatedAt,
 		}
 	}
-	return res, nil
+	return res, total, nil
 }
 
